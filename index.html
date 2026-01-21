@@ -1,19 +1,18 @@
 <!DOCTYPE html>
 
-
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>PDF Slide Studio - PDFを複数形式に変換</title>
-  <meta name="description" content="PDFスライドをPNG、PowerPoint、GIF、長画像に変換。完全にブラウザ内で処理、アップロード不要。">
+  <title>PDF Slide Studio Pro - OCR＆図形分解対応</title>
+  <meta name="description" content="PDFスライドをOCRでテキスト抽出、図形を自動分解。PNG、PowerPoint、GIF、長画像に変換。">
 
   <!-- OGP / SNS共有 -->
 
-  <meta property="og:title" content="PDF Slide Studio">
-  <meta property="og:description" content="PDFスライドを複数形式に変換。完全にブラウザ内で処理。">
+  <meta property="og:title" content="PDF Slide Studio Pro">
+  <meta property="og:description" content="PDFスライドをOCRでテキスト抽出、図形分解。完全にブラウザ内で処理。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://toshiki-yasuda.github.io/pdf-slide-studio/">
   <meta name="twitter:card" content="summary">
@@ -33,6 +32,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+
+  <!-- Tesseract.js for OCR -->
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <!-- Lucide Icons -->
 
@@ -107,6 +110,33 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    
+    /* タブスタイル */
+    .tab-active {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: rgb(6, 182, 212);
+      color: rgb(6, 182, 212);
+    }
+    
+    /* 図形オーバーレイ */
+    .shape-overlay {
+      position: absolute;
+      border: 2px solid;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    
+    /* 編集可能テキストエリア */
+    .editable-text {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.2s;
+    }
+    .editable-text:focus {
+      background: rgba(0,0,0,0.5);
+      border-color: rgba(6, 182, 212, 0.5);
+      outline: none;
+    }
   </style>
 
 </head>
@@ -121,23 +151,23 @@
 
   <!-- Main App Container -->
 
-  <div id="app" class="relative z-10 min-h-screen p-4 md:p-6 flex flex-col items-center justify-center">
-    <div class="w-full max-w-7xl space-y-6 md:space-y-8">
+  <div id="app" class="relative z-10 min-h-screen p-4 md:p-6">
+    <div class="w-full max-w-7xl mx-auto space-y-6 md:space-y-8">
 
 ```
   <!-- Header -->
   <header class="text-center space-y-4 md:space-y-6 pt-2 md:pt-4">
     <div class="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
       <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-300" aria-hidden="true"></i>
-      <span class="text-[10px] md:text-[11px] uppercase tracking-[0.15em] md:tracking-[0.2em] font-bold text-cyan-300/90">PDF Slide Studio</span>
+      <span class="text-[10px] md:text-[11px] uppercase tracking-[0.15em] md:tracking-[0.2em] font-bold text-cyan-300/90">PDF Slide Studio Pro</span>
     </div>
     
     <div id="header-content">
       <h1 class="text-2xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight px-2">
-        PDFを複数形式に変換
+        OCR＆図形分解対応
       </h1>
       <p class="text-slate-400 text-sm md:text-lg max-w-2xl mx-auto font-light px-4 mt-4">
-        スライドをPNG・PPTX・GIF・長画像に変換。完全にブラウザ内で処理。
+        テキスト抽出・図形検出・複数形式変換。完全にブラウザ内で処理。
       </p>
     </div>
   </header>
@@ -158,7 +188,7 @@
       <button 
         type="button" 
         id="upload-button"
-        class="relative w-full p-12 md:p-24 text-center cursor-pointer group transition-all duration-300 hover:bg-white/5 active:bg-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 touch-feedback"
+        class="relative w-full p-12 md:p-20 text-center cursor-pointer group transition-all duration-300 hover:bg-white/5 active:bg-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 touch-feedback"
         aria-describedby="upload-description"
       >
         <div class="flex flex-col items-center gap-6 md:gap-8">
@@ -174,6 +204,30 @@
             </p>
           </div>
           
+          <!-- OCR設定 -->
+          <div class="flex flex-wrap gap-3 justify-center mt-2">
+            <label class="flex items-center gap-2 px-4 py-2 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800/80 transition-all">
+              <input type="checkbox" id="ocr-enabled" checked class="w-4 h-4 rounded text-cyan-500">
+              <span class="text-sm text-slate-300">OCRテキスト抽出</span>
+            </label>
+            <label class="flex items-center gap-2 px-4 py-2 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800/80 transition-all">
+              <input type="checkbox" id="shape-detection-enabled" checked class="w-4 h-4 rounded text-cyan-500">
+              <span class="text-sm text-slate-300">図形検出</span>
+            </label>
+          </div>
+          
+          <!-- 言語選択 -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-500">OCR言語:</span>
+            <select id="ocr-language" class="bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-300 focus:outline-none focus:border-cyan-500">
+              <option value="jpn+eng">日本語+英語</option>
+              <option value="jpn">日本語のみ</option>
+              <option value="eng">英語のみ</option>
+              <option value="chi_sim+eng">中国語(簡体)+英語</option>
+              <option value="kor+eng">韓国語+英語</option>
+            </select>
+          </div>
+          
           <!-- 明示的な選択ボタン -->
           <div class="mt-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 active:bg-cyan-800 text-white rounded-xl font-medium text-sm md:text-base transition-all shadow-lg shadow-cyan-600/30 flex items-center gap-2">
             <i data-lucide="folder-open" class="w-5 h-5" aria-hidden="true"></i>
@@ -182,14 +236,14 @@
           
           <div id="init-status" class="inline-flex items-center gap-2 px-4 py-2 bg-black/20 border border-white/5 text-slate-400 text-xs font-medium rounded-full mt-4 backdrop-blur-sm">
             <i data-lucide="loader-2" class="w-3 h-3 animate-spin text-cyan-400" aria-hidden="true"></i>
-            <span>初期化中...</span>
+            <span>OCRエンジン初期化中...</span>
           </div>
         </div>
       </button>
     </div>
 
     <!-- Processing View (Hidden by default) -->
-    <div id="processing-area" class="hidden bg-white/5 backdrop-blur-2xl rounded-2xl md:rounded-[2.5rem] border border-white/10 overflow-hidden p-12 md:p-24 flex-col items-center justify-center min-h-[400px] md:min-h-[500px]" role="status" aria-live="polite">
+    <div id="processing-area" class="hidden bg-white/5 backdrop-blur-2xl rounded-2xl md:rounded-[2.5rem] border border-white/10 overflow-hidden p-12 md:p-20 flex-col items-center justify-center min-h-[400px] md:min-h-[500px]" role="status" aria-live="polite">
       <div class="relative w-36 h-36 md:w-48 md:h-48 mb-8 md:mb-10">
         <svg class="w-full h-full progress-ring" viewBox="0 0 100 100" aria-hidden="true">
           <circle class="text-slate-800/50 stroke-current" stroke-width="2" cx="50" cy="50" r="46" fill="transparent"></circle>
@@ -211,6 +265,7 @@
       <h3 id="progress-message" class="text-lg md:text-xl font-bold text-white mb-2 animate-pulse text-center px-4">
         準備中...
       </h3>
+      <p id="progress-detail" class="text-sm text-slate-400 text-center"></p>
       <button id="cancel-button" class="mt-6 px-8 py-3 text-sm font-bold text-slate-500 hover:text-white active:text-white rounded-full hover:bg-white/10 active:bg-white/20 transition-all touch-feedback">
         キャンセル
       </button>
@@ -222,43 +277,148 @@
       <!-- Controls -->
       <div class="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4">
         <div class="flex gap-4 items-center justify-center md:justify-start">
-          <span id="file-name" class="text-sm text-cyan-300 font-medium truncate max-w-[200px]"></span>
+          <span id="file-name" class="text-sm text-cyan-300 font-medium truncate max-w-[150px]"></span>
           <span id="slide-count" class="text-xs text-slate-500"></span>
         </div>
         <div class="flex gap-2 flex-wrap justify-center md:justify-end">
           <button id="download-zip-btn" class="flex-1 md:flex-none px-3 md:px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 active:bg-cyan-800 disabled:bg-cyan-600 text-white rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="PNG画像をZIP形式でダウンロード">
             <i data-lucide="file-archive" class="w-4 h-4" aria-hidden="true"></i>
-            <span class="hidden sm:inline">画像ZIP</span>
-            <span class="sm:hidden">ZIP</span>
+            <span class="hidden sm:inline">ZIP</span>
           </button>
           <button id="download-pptx-btn" class="flex-1 md:flex-none px-3 md:px-4 py-2.5 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 disabled:bg-orange-600 text-white rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="PowerPoint形式でダウンロード">
             <i data-lucide="presentation" class="w-4 h-4" aria-hidden="true"></i>
             <span class="hidden sm:inline">PPTX</span>
-            <span class="sm:hidden">PPT</span>
           </button>
-          <button id="download-gif-btn" class="flex-1 md:flex-none px-3 md:px-4 py-2.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 disabled:bg-purple-600 text-white rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="アニメーションGIF形式でダウンロード">
+          <button id="download-gif-btn" class="flex-1 md:flex-none px-3 md:px-4 py-2.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 disabled:bg-purple-600 text-white rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="アニメーションGIF">
             <i data-lucide="film" class="w-4 h-4" aria-hidden="true"></i>
-            <span>GIF</span>
+            <span class="hidden sm:inline">GIF</span>
           </button>
-          <button id="download-long-btn" class="flex-1 md:flex-none px-3 md:px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-600 text-white rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="縦長1枚画像としてダウンロード">
-            <i data-lucide="scroll-text" class="w-4 h-4" aria-hidden="true"></i>
-            <span class="hidden sm:inline">長画像</span>
-            <span class="sm:hidden">長</span>
+          <button id="download-json-btn" class="flex-1 md:flex-none px-3 md:px-4 py-2.5 bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:bg-green-600 text-white rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="OCRテキスト＆図形データをJSON形式でダウンロード">
+            <i data-lucide="file-json" class="w-4 h-4" aria-hidden="true"></i>
+            <span class="hidden sm:inline">JSON</span>
           </button>
-          <button id="reset-btn" class="px-3 md:px-4 py-2.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="新しいファイルを選択">
+          <button id="download-text-btn" class="flex-1 md:flex-none px-3 md:px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-600 text-white rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="全スライドのテキストをまとめてダウンロード">
+            <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+            <span class="hidden sm:inline">TXT</span>
+          </button>
+          <button id="reset-btn" class="px-3 md:px-4 py-2.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="リセット">
             <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
           </button>
         </div>
       </div>
 
-      <!-- Slide Grid -->
-      <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4">
-        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-          <i data-lucide="layout-grid" class="w-4 h-4" aria-hidden="true"></i>
-          スライドプレビュー
-        </h3>
-        <div id="slide-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar" role="list">
-          <!-- Slides will be inserted here -->
+      <!-- タブ切り替え -->
+      <div class="flex gap-2 overflow-x-auto pb-2">
+        <button id="tab-preview" class="tab-btn tab-active px-4 py-2 rounded-lg border border-white/10 text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap">
+          <i data-lucide="layout-grid" class="w-4 h-4"></i>
+          プレビュー
+        </button>
+        <button id="tab-text" class="tab-btn px-4 py-2 rounded-lg border border-white/10 text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap text-slate-400 hover:text-white hover:bg-white/5">
+          <i data-lucide="file-text" class="w-4 h-4"></i>
+          テキスト編集
+        </button>
+        <button id="tab-shapes" class="tab-btn px-4 py-2 rounded-lg border border-white/10 text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap text-slate-400 hover:text-white hover:bg-white/5">
+          <i data-lucide="shapes" class="w-4 h-4"></i>
+          図形一覧
+        </button>
+      </div>
+
+      <!-- Preview Tab Content -->
+      <div id="tab-content-preview" class="tab-content">
+        <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4">
+          <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <i data-lucide="layout-grid" class="w-4 h-4" aria-hidden="true"></i>
+            スライドプレビュー
+            <span id="ocr-status" class="text-xs text-cyan-400 ml-2"></span>
+          </h3>
+          <div id="slide-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar" role="list">
+            <!-- Slides will be inserted here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Edit Tab Content -->
+      <div id="tab-content-text" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Slide Selector -->
+          <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+              <i data-lucide="list" class="w-4 h-4"></i>
+              スライド選択
+            </h3>
+            <div id="slide-list" class="space-y-2">
+              <!-- Slide buttons will be inserted here -->
+            </div>
+          </div>
+          
+          <!-- Text Editor -->
+          <div class="lg:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                <span id="text-editor-title">スライドを選択してください</span>
+              </h3>
+              <div id="text-confidence" class="text-xs text-slate-400"></div>
+            </div>
+            <div id="slide-preview-container" class="mb-4 bg-black/30 rounded-lg overflow-hidden max-h-[200px] flex items-center justify-center">
+              <p class="text-slate-500 text-sm p-8">スライドを選択するとプレビューが表示されます</p>
+            </div>
+            <textarea 
+              id="text-editor" 
+              class="w-full h-48 md:h-64 bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-slate-200 text-sm font-mono resize-none editable-text"
+              placeholder="スライドを選択するとOCRで抽出されたテキストが表示されます..."
+              disabled
+            ></textarea>
+            <div class="flex items-center justify-between mt-3">
+              <span id="text-char-count" class="text-xs text-slate-500">0 文字</span>
+              <button id="copy-text-btn" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-medium transition-all flex items-center gap-2" disabled>
+                <i data-lucide="copy" class="w-3 h-3"></i>
+                コピー
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shapes Tab Content -->
+      <div id="tab-content-shapes" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Slide Selector for Shapes -->
+          <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+              <i data-lucide="list" class="w-4 h-4"></i>
+              スライド選択
+            </h3>
+            <div id="shape-slide-list" class="space-y-2">
+              <!-- Slide buttons will be inserted here -->
+            </div>
+          </div>
+          
+          <!-- Shape List & Preview -->
+          <div class="lg:col-span-2 space-y-4">
+            <!-- Shape Preview with Overlay -->
+            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+              <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                <i data-lucide="scan" class="w-4 h-4"></i>
+                <span id="shape-preview-title">図形プレビュー</span>
+              </h3>
+              <div id="shape-preview-container" class="relative bg-black/30 rounded-lg overflow-hidden">
+                <p class="text-slate-500 text-sm p-8 text-center">スライドを選択すると検出された図形が表示されます</p>
+              </div>
+            </div>
+            
+            <!-- Shape List -->
+            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 max-h-[300px] overflow-y-auto custom-scrollbar">
+              <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                <i data-lucide="shapes" class="w-4 h-4"></i>
+                検出された図形
+                <span id="shape-count" class="text-xs text-slate-400 ml-2">(0)</span>
+              </h3>
+              <div id="shape-list" class="space-y-2">
+                <p class="text-slate-500 text-sm">図形がここに表示されます</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -280,9 +440,9 @@
   <!-- Footer -->
   <footer class="text-center text-xs text-slate-600 py-4">
     <a href="https://github.com/Toshiki-Yasuda/pdf-slide-studio" target="_blank" rel="noopener noreferrer" class="hover:text-slate-400 transition-colors">
-      PDF Slide Studio
+      PDF Slide Studio Pro
     </a>
-    • Mobile Optimized • No Upload Required
+    • OCR & Shape Detection • No Upload Required
   </footer>
   
 </div>
@@ -297,7 +457,6 @@
       <button id="close-modal" class="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all" aria-label="閉じる">
         <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
       </button>
-      <!-- ナビゲーションボタン -->
       <button id="prev-slide" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all" aria-label="前のスライド">
         <i data-lucide="chevron-left" class="w-5 h-5" aria-hidden="true"></i>
       </button>
@@ -308,6 +467,10 @@
         <h2 id="modal-title" class="sr-only">スライドプレビュー</h2>
         <img id="modal-image" src="" alt="スライドプレビュー" class="w-full h-auto rounded-lg">
         <p id="modal-caption" class="text-center text-slate-400 text-sm mt-4"></p>
+        <div id="modal-text" class="mt-4 p-4 bg-black/30 rounded-lg max-h-[200px] overflow-y-auto">
+          <p class="text-xs text-slate-400 mb-2">OCR抽出テキスト:</p>
+          <p id="modal-ocr-text" class="text-sm text-slate-300 whitespace-pre-wrap"></p>
+        </div>
       </div>
     </div>
   </div>
@@ -322,22 +485,33 @@
   </div>
 
   <script>
-    // Initialize PDF.js worker
+    // ============================================
+    // Initialize Libraries
+    // ============================================
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+    // ============================================
     // App State
+    // ============================================
     const state = {
       file: null,
       images: [],
       zipBlob: null,
       status: 'idle',
-      progress: { current: 0, total: 0, message: '' },
+      progress: { current: 0, total: 0, message: '', detail: '' },
       cancelRequested: false,
       currentModalSlide: 0,
-      isExporting: false
+      isExporting: false,
+      selectedSlideIndex: null,
+      ocrEnabled: true,
+      shapeDetectionEnabled: true,
+      ocrLanguage: 'jpn+eng',
+      tesseractWorker: null
     };
 
+    // ============================================
     // DOM Elements
+    // ============================================
     const elements = {
       fileInput: document.getElementById('file-input'),
       uploadArea: document.getElementById('upload-area'),
@@ -350,14 +524,17 @@
       progressCircle: document.getElementById('progress-circle'),
       progressPercent: document.getElementById('progress-percent'),
       progressMessage: document.getElementById('progress-message'),
+      progressDetail: document.getElementById('progress-detail'),
       cancelButton: document.getElementById('cancel-button'),
       fileName: document.getElementById('file-name'),
       slideCount: document.getElementById('slide-count'),
       slideGrid: document.getElementById('slide-grid'),
+      ocrStatus: document.getElementById('ocr-status'),
       downloadZipBtn: document.getElementById('download-zip-btn'),
       downloadPptxBtn: document.getElementById('download-pptx-btn'),
       downloadGifBtn: document.getElementById('download-gif-btn'),
-      downloadLongBtn: document.getElementById('download-long-btn'),
+      downloadJsonBtn: document.getElementById('download-json-btn'),
+      downloadTextBtn: document.getElementById('download-text-btn'),
       resetBtn: document.getElementById('reset-btn'),
       retryBtn: document.getElementById('retry-btn'),
       errorMessage: document.getElementById('error-message'),
@@ -367,23 +544,235 @@
       nextSlide: document.getElementById('next-slide'),
       modalImage: document.getElementById('modal-image'),
       modalCaption: document.getElementById('modal-caption'),
+      modalOcrText: document.getElementById('modal-ocr-text'),
       toast: document.getElementById('toast'),
       toastIcon: document.getElementById('toast-icon'),
-      toastMessage: document.getElementById('toast-message')
+      toastMessage: document.getElementById('toast-message'),
+      // Settings
+      ocrEnabled: document.getElementById('ocr-enabled'),
+      shapeDetectionEnabled: document.getElementById('shape-detection-enabled'),
+      ocrLanguage: document.getElementById('ocr-language'),
+      // Tabs
+      tabPreview: document.getElementById('tab-preview'),
+      tabText: document.getElementById('tab-text'),
+      tabShapes: document.getElementById('tab-shapes'),
+      tabContentPreview: document.getElementById('tab-content-preview'),
+      tabContentText: document.getElementById('tab-content-text'),
+      tabContentShapes: document.getElementById('tab-content-shapes'),
+      // Text Editor
+      slideList: document.getElementById('slide-list'),
+      textEditor: document.getElementById('text-editor'),
+      textEditorTitle: document.getElementById('text-editor-title'),
+      textConfidence: document.getElementById('text-confidence'),
+      textCharCount: document.getElementById('text-char-count'),
+      slidePreviewContainer: document.getElementById('slide-preview-container'),
+      copyTextBtn: document.getElementById('copy-text-btn'),
+      // Shape Editor
+      shapeSlideList: document.getElementById('shape-slide-list'),
+      shapePreviewContainer: document.getElementById('shape-preview-container'),
+      shapePreviewTitle: document.getElementById('shape-preview-title'),
+      shapeList: document.getElementById('shape-list'),
+      shapeCount: document.getElementById('shape-count')
     };
 
-    // Initialize Lucide icons
+    // ============================================
+    // Initialize
+    // ============================================
     lucide.createIcons();
 
-    // Hide init status after libraries load
-    setTimeout(() => {
-      elements.initStatus.classList.add('hidden');
-    }, 1500);
+    // Initialize OCR Worker
+    async function initOCRWorker() {
+      try {
+        if (window.Tesseract) {
+          elements.initStatus.innerHTML = `
+            <i data-lucide="check-circle" class="w-3 h-3 text-green-400" aria-hidden="true"></i>
+            <span>OCRエンジン準備完了</span>
+          `;
+          lucide.createIcons();
+          setTimeout(() => {
+            elements.initStatus.classList.add('hidden');
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('OCR init error:', err);
+        elements.initStatus.innerHTML = `
+          <i data-lucide="alert-circle" class="w-3 h-3 text-yellow-400" aria-hidden="true"></i>
+          <span>OCRはオプション機能です</span>
+        `;
+        lucide.createIcons();
+      }
+    }
+    initOCRWorker();
+
+    // ============================================
+    // OCR Processing
+    // ============================================
+    async function performOCR(imageDataUrl, language = 'jpn+eng') {
+      if (!window.Tesseract || !state.ocrEnabled) {
+        return { text: '', confidence: 0 };
+      }
+      
+      try {
+        const worker = await Tesseract.createWorker(language, 1, {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              const progress = Math.round(m.progress * 100);
+              elements.progressDetail.textContent = `OCR処理中... ${progress}%`;
+            }
+          }
+        });
+        
+        const result = await worker.recognize(imageDataUrl);
+        await worker.terminate();
+        
+        return { 
+          text: result.data.text.trim(), 
+          confidence: Math.round(result.data.confidence),
+          words: result.data.words || []
+        };
+      } catch (err) {
+        console.error('OCR Error:', err);
+        return { text: '', confidence: 0, words: [] };
+      }
+    }
+
+    // ============================================
+    // Shape Detection (Enhanced)
+    // ============================================
+    function detectShapes(canvas) {
+      if (!state.shapeDetectionEnabled) {
+        return [];
+      }
+      
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      
+      const shapes = [];
+      
+      // グレースケール変換
+      const gray = new Uint8ClampedArray(width * height);
+      for (let i = 0; i < data.length; i += 4) {
+        gray[i / 4] = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+      }
+      
+      // Sobelエッジ検出
+      const edges = new Uint8ClampedArray(width * height);
+      const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+      const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+      
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          let gx = 0, gy = 0;
+          for (let ky = -1; ky <= 1; ky++) {
+            for (let kx = -1; kx <= 1; kx++) {
+              const idx = (y + ky) * width + (x + kx);
+              const kidx = (ky + 1) * 3 + (kx + 1);
+              gx += gray[idx] * sobelX[kidx];
+              gy += gray[idx] * sobelY[kidx];
+            }
+          }
+          edges[y * width + x] = Math.min(255, Math.sqrt(gx * gx + gy * gy));
+        }
+      }
+      
+      // 連結成分分析で図形を検出
+      const visited = new Set();
+      const threshold = 50;
+      const minArea = 100;
+      
+      function floodFill(startX, startY) {
+        const stack = [[startX, startY]];
+        const region = [];
+        let minX = startX, maxX = startX, minY = startY, maxY = startY;
+        
+        while (stack.length > 0 && region.length < 10000) {
+          const [x, y] = stack.pop();
+          const key = `${x},${y}`;
+          
+          if (visited.has(key) || x < 0 || x >= width || y < 0 || y >= height) continue;
+          if (edges[y * width + x] < threshold) continue;
+          
+          visited.add(key);
+          region.push([x, y]);
+          
+          minX = Math.min(minX, x);
+          maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+          
+          // 8近傍
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (dx !== 0 || dy !== 0) {
+                stack.push([x + dx, y + dy]);
+              }
+            }
+          }
+        }
+        
+        return { region, minX, maxX, minY, maxY };
+      }
+      
+      // サンプリングで検出
+      for (let y = 5; y < height - 5; y += 15) {
+        for (let x = 5; x < width - 5; x += 15) {
+          if (visited.has(`${x},${y}`)) continue;
+          if (edges[y * width + x] < threshold) continue;
+          
+          const { region, minX, maxX, minY, maxY } = floodFill(x, y);
+          
+          if (region.length >= minArea) {
+            const shapeWidth = maxX - minX;
+            const shapeHeight = maxY - minY;
+            const area = region.length;
+            const boundingArea = shapeWidth * shapeHeight;
+            const fillRatio = area / boundingArea;
+            const aspectRatio = shapeWidth / (shapeHeight || 1);
+            
+            // 形状分類
+            let type = 'rectangle';
+            let color = '#3b82f6';
+            
+            if (aspectRatio > 0.8 && aspectRatio < 1.2 && fillRatio > 0.6) {
+              type = 'circle';
+              color = '#10b981';
+            } else if (aspectRatio > 3 || aspectRatio < 0.33) {
+              type = 'line';
+              color = '#f59e0b';
+            } else if (fillRatio < 0.3) {
+              type = 'polygon';
+              color = '#8b5cf6';
+            }
+            
+            shapes.push({
+              id: shapes.length,
+              type,
+              x: minX,
+              y: minY,
+              width: shapeWidth,
+              height: shapeHeight,
+              area: area,
+              fillRatio: Math.round(fillRatio * 100),
+              color,
+              editable: true
+            });
+          }
+        }
+      }
+      
+      // サイズでソート（大きい順）
+      shapes.sort((a, b) => b.area - a.area);
+      
+      // 上位30個に制限
+      return shapes.slice(0, 30);
+    }
 
     // ============================================
     // Event Listeners
     // ============================================
-
     elements.uploadButton.addEventListener('click', (e) => {
       e.preventDefault();
       elements.fileInput.click();
@@ -397,6 +786,10 @@
     elements.fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file && file.type === 'application/pdf') {
+        // 設定を取得
+        state.ocrEnabled = elements.ocrEnabled.checked;
+        state.shapeDetectionEnabled = elements.shapeDetectionEnabled.checked;
+        state.ocrLanguage = elements.ocrLanguage.value;
         processFile(file);
       } else if (file) {
         showError('PDFファイルのみ対応しています。');
@@ -419,6 +812,9 @@
       elements.uploadButton.classList.remove('bg-indigo-500/10');
       const file = e.dataTransfer.files[0];
       if (file && file.type === 'application/pdf') {
+        state.ocrEnabled = elements.ocrEnabled.checked;
+        state.shapeDetectionEnabled = elements.shapeDetectionEnabled.checked;
+        state.ocrLanguage = elements.ocrLanguage.value;
         processFile(file);
       } else if (file) {
         showError('PDFファイルのみ対応しています。');
@@ -427,22 +823,23 @@
 
     elements.cancelButton.addEventListener('click', () => {
       state.cancelRequested = true;
-      updateProgress(0, 0, 'キャンセル中...');
+      updateProgress(0, 0, 'キャンセル中...', '');
     });
 
     elements.resetBtn.addEventListener('click', reset);
     elements.retryBtn.addEventListener('click', reset);
 
+    // Download buttons
     elements.downloadZipBtn.addEventListener('click', downloadZip);
     elements.downloadPptxBtn.addEventListener('click', downloadPptx);
     elements.downloadGifBtn.addEventListener('click', downloadGif);
-    elements.downloadLongBtn.addEventListener('click', downloadLongImage);
+    elements.downloadJsonBtn.addEventListener('click', downloadJson);
+    elements.downloadTextBtn.addEventListener('click', downloadAllText);
 
     // Modal controls
     elements.closeModal.addEventListener('click', closeModal);
     elements.prevSlide.addEventListener('click', () => navigateSlide(-1));
     elements.nextSlide.addEventListener('click', () => navigateSlide(1));
-
     elements.slideModal.addEventListener('click', (e) => {
       if (e.target === elements.slideModal) closeModal();
     });
@@ -456,6 +853,26 @@
       }
     });
 
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.id.replace('tab-', '')));
+    });
+
+    // Text editor
+    elements.textEditor.addEventListener('input', (e) => {
+      if (state.selectedSlideIndex !== null) {
+        state.images[state.selectedSlideIndex].text = e.target.value;
+        elements.textCharCount.textContent = `${e.target.value.length} 文字`;
+      }
+    });
+
+    elements.copyTextBtn.addEventListener('click', () => {
+      if (elements.textEditor.value) {
+        navigator.clipboard.writeText(elements.textEditor.value);
+        showToast('テキストをコピーしました', 'success');
+      }
+    });
+
     // ============================================
     // Process PDF File
     // ============================================
@@ -464,32 +881,30 @@
       state.images = [];
       state.zipBlob = null;
       state.cancelRequested = false;
+      state.selectedSlideIndex = null;
       
       showProcessing();
-      updateProgress(0, 0, 'PDFを解析中...');
+      updateProgress(0, 0, 'PDFを解析中...', '');
 
       try {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
         const totalPages = pdf.numPages;
 
-        // ファイルサイズチェック（警告のみ）
-        if (totalPages > 100) {
-          console.warn('Large PDF detected:', totalPages, 'pages');
-        }
-
         const zip = new JSZip();
-        const folder = zip.folder('slides');
+        const imageFolder = zip.folder('images');
+        const textFolder = zip.folder('text');
+
+        let totalOcrTime = 0;
 
         for (let i = 1; i <= totalPages; i++) {
-          // キャンセルチェック
           if (state.cancelRequested) {
             reset();
             showToast('処理をキャンセルしました', 'info');
             return;
           }
 
-          updateProgress(i, totalPages, `スライド ${i}/${totalPages} を処理中...`);
+          updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'レンダリング中...');
 
           const page = await pdf.getPage(i);
           const scale = 2.0;
@@ -505,48 +920,71 @@
           const dataUrl = canvas.toDataURL('image/png');
           const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 
-          state.images.push({
+          // OCR処理
+          let ocrResult = { text: '', confidence: 0, words: [] };
+          if (state.ocrEnabled) {
+            updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'OCR処理中...');
+            const ocrStart = Date.now();
+            ocrResult = await performOCR(dataUrl, state.ocrLanguage);
+            totalOcrTime += Date.now() - ocrStart;
+          }
+
+          // 図形検出
+          let shapes = [];
+          if (state.shapeDetectionEnabled) {
+            updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, '図形検出中...');
+            shapes = detectShapes(canvas);
+          }
+
+          const slideData = {
             id: i,
             dataUrl,
             blob,
             width: viewport.width,
             height: viewport.height,
-            name: `slide_${String(i).padStart(2, '0')}.png`
-          });
+            name: `slide_${String(i).padStart(2, '0')}.png`,
+            text: ocrResult.text,
+            confidence: ocrResult.confidence,
+            words: ocrResult.words,
+            shapes: shapes
+          };
 
-          folder.file(`slide_${String(i).padStart(2, '0')}.png`, blob);
+          state.images.push(slideData);
+
+          // ZIPに追加
+          imageFolder.file(slideData.name, blob);
+          if (ocrResult.text) {
+            textFolder.file(`slide_${String(i).padStart(2, '0')}.txt`, ocrResult.text);
+          }
 
           // メモリ解放
           canvas.width = 0;
           canvas.height = 0;
 
-          // UIレスポンシブ性のための遅延
           await new Promise(r => setTimeout(r, 30));
         }
 
-        // 最終キャンセルチェック
         if (state.cancelRequested) {
           reset();
           showToast('処理をキャンセルしました', 'info');
           return;
         }
 
-        updateProgress(totalPages, totalPages, 'ZIPを作成中...');
+        updateProgress(totalPages, totalPages, 'パッケージ作成中...', '');
         state.zipBlob = await zip.generateAsync({ type: 'blob' });
 
         showEditor();
-        showToast(`${totalPages}枚のスライドを変換しました`, 'success');
+        
+        const ocrInfo = state.ocrEnabled ? ` (OCR: ${Math.round(totalOcrTime / 1000)}秒)` : '';
+        showToast(`${totalPages}枚のスライドを処理しました${ocrInfo}`, 'success');
       } catch (err) {
         console.error('Processing error:', err);
         
-        // エラーメッセージの詳細化
         let errorMsg = 'PDFの処理中にエラーが発生しました。';
         if (err.name === 'PasswordException') {
           errorMsg = 'パスワードで保護されたPDFは処理できません。';
         } else if (err.name === 'InvalidPDFException') {
-          errorMsg = '無効なPDFファイルです。ファイルを確認してください。';
-        } else if (err.message && err.message.includes('memory')) {
-          errorMsg = 'メモリ不足です。より小さいPDFで試してください。';
+          errorMsg = '無効なPDFファイルです。';
         }
         
         showError(errorMsg);
@@ -575,8 +1013,16 @@
 
       elements.fileName.textContent = state.file.name;
       elements.slideCount.textContent = `${state.images.length} スライド`;
+      
+      const totalChars = state.images.reduce((sum, img) => sum + (img.text?.length || 0), 0);
+      const totalShapes = state.images.reduce((sum, img) => sum + (img.shapes?.length || 0), 0);
+      elements.ocrStatus.textContent = state.ocrEnabled 
+        ? `OCR: ${totalChars.toLocaleString()}文字 / 図形: ${totalShapes}個`
+        : '';
 
       renderSlideGrid();
+      renderSlideList();
+      renderShapeSlideList();
     }
 
     function showError(message) {
@@ -594,6 +1040,7 @@
       state.images = [];
       state.zipBlob = null;
       state.cancelRequested = false;
+      state.selectedSlideIndex = null;
       elements.fileInput.value = '';
 
       elements.uploadArea.classList.remove('hidden');
@@ -603,9 +1050,13 @@
       elements.errorArea.classList.add('hidden');
       elements.headerContent.classList.remove('hidden');
       elements.slideGrid.innerHTML = '';
+      elements.slideList.innerHTML = '';
+      elements.shapeSlideList.innerHTML = '';
+      
+      switchTab('preview');
     }
 
-    function updateProgress(current, total, message) {
+    function updateProgress(current, total, message, detail) {
       const percent = total > 0 ? Math.round((current / total) * 100) : 0;
       const circumference = 289.02;
       const dashArray = `${(circumference * percent) / 100} ${circumference}`;
@@ -613,8 +1064,34 @@
       elements.progressCircle.setAttribute('stroke-dasharray', dashArray);
       elements.progressPercent.textContent = `${percent}%`;
       elements.progressMessage.textContent = message;
+      elements.progressDetail.textContent = detail || '';
     }
 
+    // ============================================
+    // Tab Functions
+    // ============================================
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('tab-active');
+        btn.classList.add('text-slate-400');
+      });
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+      });
+
+      const activeTab = document.getElementById(`tab-${tabName}`);
+      const activeContent = document.getElementById(`tab-content-${tabName}`);
+      
+      if (activeTab && activeContent) {
+        activeTab.classList.add('tab-active');
+        activeTab.classList.remove('text-slate-400');
+        activeContent.classList.remove('hidden');
+      }
+    }
+
+    // ============================================
+    // Render Functions
+    // ============================================
     function renderSlideGrid() {
       elements.slideGrid.innerHTML = '';
 
@@ -622,13 +1099,23 @@
         const slideEl = document.createElement('div');
         slideEl.className = 'group relative bg-slate-800/50 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-cyan-500/50 transition-all touch-feedback';
         slideEl.setAttribute('role', 'listitem');
+        
+        const hasText = img.text && img.text.length > 0;
+        const hasShapes = img.shapes && img.shapes.length > 0;
+        
         slideEl.innerHTML = `
           <img src="${img.dataUrl}" alt="スライド ${idx + 1}" class="w-full h-auto" loading="lazy">
           <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
             <i data-lucide="maximize-2" class="w-6 h-6 text-white" aria-hidden="true"></i>
           </div>
           <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-            <span class="text-xs text-white font-medium">${idx + 1}</span>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-white font-medium">${idx + 1}</span>
+              <div class="flex gap-1">
+                ${hasText ? '<span class="w-2 h-2 bg-green-400 rounded-full" title="テキストあり"></span>' : ''}
+                ${hasShapes ? '<span class="w-2 h-2 bg-blue-400 rounded-full" title="図形あり"></span>' : ''}
+              </div>
+            </div>
           </div>
         `;
 
@@ -637,6 +1124,125 @@
       });
 
       lucide.createIcons();
+    }
+
+    function renderSlideList() {
+      elements.slideList.innerHTML = '';
+
+      state.images.forEach((img, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `w-full p-3 rounded-lg text-left transition-all ${
+          state.selectedSlideIndex === idx 
+            ? 'bg-cyan-600 text-white' 
+            : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700'
+        }`;
+        btn.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-medium">スライド ${idx + 1}</span>
+            <span class="text-xs opacity-70">${img.text?.length || 0}文字</span>
+          </div>
+          <p class="text-xs mt-1 opacity-70 line-clamp-2">${img.text?.slice(0, 50) || 'テキストなし'}...</p>
+        `;
+        btn.addEventListener('click', () => selectSlideForTextEdit(idx));
+        elements.slideList.appendChild(btn);
+      });
+    }
+
+    function renderShapeSlideList() {
+      elements.shapeSlideList.innerHTML = '';
+
+      state.images.forEach((img, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `w-full p-3 rounded-lg text-left transition-all ${
+          state.selectedSlideIndex === idx 
+            ? 'bg-cyan-600 text-white' 
+            : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700'
+        }`;
+        btn.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-medium">スライド ${idx + 1}</span>
+            <span class="text-xs opacity-70">${img.shapes?.length || 0}個</span>
+          </div>
+        `;
+        btn.addEventListener('click', () => selectSlideForShapeView(idx));
+        elements.shapeSlideList.appendChild(btn);
+      });
+    }
+
+    function selectSlideForTextEdit(idx) {
+      state.selectedSlideIndex = idx;
+      const img = state.images[idx];
+      
+      elements.textEditorTitle.textContent = `スライド ${idx + 1}`;
+      elements.textEditor.value = img.text || '';
+      elements.textEditor.disabled = false;
+      elements.copyTextBtn.disabled = false;
+      elements.textCharCount.textContent = `${(img.text?.length || 0)} 文字`;
+      elements.textConfidence.textContent = img.confidence ? `信頼度: ${img.confidence}%` : '';
+      
+      elements.slidePreviewContainer.innerHTML = `
+        <img src="${img.dataUrl}" alt="スライド ${idx + 1}" class="max-w-full max-h-[200px] mx-auto">
+      `;
+      
+      renderSlideList();
+    }
+
+    function selectSlideForShapeView(idx) {
+      state.selectedSlideIndex = idx;
+      const img = state.images[idx];
+      
+      elements.shapePreviewTitle.textContent = `スライド ${idx + 1} の図形`;
+      elements.shapeCount.textContent = `(${img.shapes?.length || 0})`;
+      
+      // プレビューに図形オーバーレイを表示
+      const scaleRatio = 400 / img.width;
+      const displayHeight = img.height * scaleRatio;
+      
+      let overlayHtml = `
+        <div class="relative" style="width: 400px; max-width: 100%;">
+          <img src="${img.dataUrl}" alt="スライド ${idx + 1}" class="w-full h-auto">
+      `;
+      
+      if (img.shapes) {
+        img.shapes.forEach((shape, i) => {
+          const left = (shape.x / img.width) * 100;
+          const top = (shape.y / img.height) * 100;
+          const width = (shape.width / img.width) * 100;
+          const height = (shape.height / img.height) * 100;
+          
+          overlayHtml += `
+            <div class="shape-overlay" style="
+              left: ${left}%;
+              top: ${top}%;
+              width: ${width}%;
+              height: ${height}%;
+              border-color: ${shape.color};
+              ${shape.type === 'circle' ? 'border-radius: 50%;' : ''}
+            " title="${shape.type} #${i + 1}"></div>
+          `;
+        });
+      }
+      
+      overlayHtml += '</div>';
+      elements.shapePreviewContainer.innerHTML = overlayHtml;
+      
+      // 図形リスト
+      if (img.shapes && img.shapes.length > 0) {
+        elements.shapeList.innerHTML = img.shapes.map((shape, i) => `
+          <div class="flex items-center gap-3 p-2 bg-slate-900/50 rounded-lg">
+            <div class="w-4 h-4 rounded ${shape.type === 'circle' ? 'rounded-full' : ''}" style="background-color: ${shape.color}"></div>
+            <div class="flex-1">
+              <span class="text-sm text-slate-200">${shape.type}</span>
+              <span class="text-xs text-slate-500 ml-2">${shape.width}×${shape.height}px</span>
+            </div>
+            <span class="text-xs text-slate-500">充填率: ${shape.fillRatio}%</span>
+          </div>
+        `).join('');
+      } else {
+        elements.shapeList.innerHTML = '<p class="text-slate-500 text-sm">図形が検出されませんでした</p>';
+      }
+      
+      renderShapeSlideList();
     }
 
     // ============================================
@@ -668,8 +1274,8 @@
       const img = state.images[state.currentModalSlide];
       elements.modalImage.src = img.dataUrl;
       elements.modalCaption.textContent = `スライド ${state.currentModalSlide + 1} / ${state.images.length}`;
+      elements.modalOcrText.textContent = img.text || '(テキストなし)';
       
-      // ナビゲーションボタンの表示/非表示
       elements.prevSlide.style.display = state.currentModalSlide > 0 ? 'flex' : 'none';
       elements.nextSlide.style.display = state.currentModalSlide < state.images.length - 1 ? 'flex' : 'none';
     }
@@ -680,7 +1286,6 @@
     function showToast(message, type = 'success') {
       elements.toastMessage.textContent = message;
       
-      // アイコン更新
       const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info';
       const iconColor = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-blue-400';
       elements.toastIcon.setAttribute('data-lucide', iconName);
@@ -713,7 +1318,8 @@
       elements.downloadZipBtn.disabled = disabled;
       elements.downloadPptxBtn.disabled = disabled;
       elements.downloadGifBtn.disabled = disabled;
-      elements.downloadLongBtn.disabled = disabled;
+      elements.downloadJsonBtn.disabled = disabled;
+      elements.downloadTextBtn.disabled = disabled;
     }
 
     function downloadZip() {
@@ -744,11 +1350,16 @@
             w: '100%',
             h: '100%'
           });
+          
+          // ノートにOCRテキストを追加
+          if (img.text) {
+            slide.addNotes(img.text);
+          }
         }
 
         const filename = state.file.name.replace('.pdf', '') + '.pptx';
         await pptx.writeFile({ fileName: filename });
-        showToast('PPTXをダウンロードしました', 'success');
+        showToast('PPTXをダウンロードしました（ノートにOCRテキスト付き）', 'success');
       } catch (err) {
         console.error('PPTX export error:', err);
         showToast('PPTX作成に失敗しました', 'error');
@@ -762,9 +1373,8 @@
 
       try {
         setExportButtonsDisabled(true);
-        showToast('GIF作成中...（時間がかかる場合があります）', 'info');
+        showToast('GIF作成中...', 'info');
 
-        // Load gif.js dynamically if not loaded
         if (!window.GIF) {
           await new Promise((resolve, reject) => {
             const script = document.createElement('script');
@@ -803,52 +1413,45 @@
       }
     }
 
-    async function downloadLongImage() {
-      if (!state.images.length || state.isExporting) return;
+    function downloadJson() {
+      if (!state.images.length) return;
 
-      try {
-        setExportButtonsDisabled(true);
-        showToast('長画像作成中...', 'info');
+      const data = {
+        filename: state.file.name,
+        processedAt: new Date().toISOString(),
+        settings: {
+          ocrEnabled: state.ocrEnabled,
+          ocrLanguage: state.ocrLanguage,
+          shapeDetectionEnabled: state.shapeDetectionEnabled
+        },
+        slides: state.images.map((img, idx) => ({
+          slideNumber: idx + 1,
+          width: img.width,
+          height: img.height,
+          text: img.text || '',
+          confidence: img.confidence || 0,
+          shapes: img.shapes || []
+        }))
+      };
 
-        const totalHeight = state.images.reduce((sum, img) => sum + img.height, 0);
-        const maxWidth = Math.max(...state.images.map(img => img.width));
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const filename = state.file.name.replace('.pdf', '') + '_data.json';
+      downloadFile(blob, filename);
+      showToast('JSONをダウンロードしました', 'success');
+    }
 
-        // サイズ制限チェック
-        if (totalHeight > 32000 || maxWidth > 32000) {
-          showToast('画像サイズが大きすぎます', 'error');
-          setExportButtonsDisabled(false);
-          return;
-        }
+    function downloadAllText() {
+      if (!state.images.length) return;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = maxWidth;
-        canvas.height = totalHeight;
-        const ctx = canvas.getContext('2d');
+      const allText = state.images.map((img, idx) => {
+        return `===== スライド ${idx + 1} =====\n\n${img.text || '(テキストなし)'}\n`;
+      }).join('\n\n');
 
-        let y = 0;
-        for (const img of state.images) {
-          const image = new Image();
-          image.src = img.dataUrl;
-          await new Promise(resolve => { image.onload = resolve; });
-          ctx.drawImage(image, 0, y, img.width, img.height);
-          y += img.height;
-        }
-
-        canvas.toBlob((blob) => {
-          const filename = state.file.name.replace('.pdf', '') + '_long.png';
-          downloadFile(blob, filename);
-          showToast('長画像をダウンロードしました', 'success');
-          
-          // メモリ解放
-          canvas.width = 0;
-          canvas.height = 0;
-          setExportButtonsDisabled(false);
-        }, 'image/png');
-      } catch (err) {
-        console.error('Long image export error:', err);
-        showToast('長画像作成に失敗しました', 'error');
-        setExportButtonsDisabled(false);
-      }
+      const blob = new Blob([allText], { type: 'text/plain; charset=utf-8' });
+      const filename = state.file.name.replace('.pdf', '') + '_all_text.txt';
+      downloadFile(blob, filename);
+      showToast('テキストファイルをダウンロードしました', 'success');
     }
   </script>
 
