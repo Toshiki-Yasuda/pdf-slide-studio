@@ -5,8 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>PDF Slide Studio Pro v4 - テキスト消去＆再配置</title>
-  <meta name="description" content="PDFのテキストを消去し、編集可能なテキストボックスで再配置。実用レベルのPPTX出力。">
+  <title>PDF Slide Studio Pro v7.1</title>
+  <meta name="description" content="PDFスライドを編集可能PPTXに変換。高速・高精度。">
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
 
@@ -23,287 +23,337 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
   <style>
-    * { -webkit-tap-highlight-color: transparent; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    
-    @keyframes aurora-1 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(20px, -20px) scale(1.1); } }
-    @keyframes aurora-2 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-20px, 10px) scale(1.2); } }
-    .animate-aurora-1 { animation: aurora-1 10s infinite ease-in-out; }
-    .animate-aurora-2 { animation: aurora-2 12s infinite ease-in-out; }
-    
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .animate-spin { animation: spin 1s linear infinite; }
-    
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .animate-pulse { animation: pulse 2s ease-in-out infinite; }
-    
-    .touch-feedback:active { transform: scale(0.98); opacity: 0.9; }
-    
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
-    
-    .progress-ring { transform: rotate(-90deg); }
-    
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    
-    .tab-active { background: rgba(6, 182, 212, 0.2); border-color: rgb(6, 182, 212); color: rgb(6, 182, 212); }
-    
-    .text-block-overlay { position: absolute; border: 2px solid; pointer-events: none; }
+    *{-webkit-tap-highlight-color:transparent}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+    @keyframes aurora-1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-20px) scale(1.1)}}
+    @keyframes aurora-2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,10px) scale(1.2)}}
+    .animate-aurora-1{animation:aurora-1 10s infinite ease-in-out}
+    .animate-aurora-2{animation:aurora-2 12s infinite ease-in-out}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .animate-spin{animation:spin 1s linear infinite}
+    .touch-feedback:active{transform:scale(0.98);opacity:0.9}
+    .custom-scrollbar::-webkit-scrollbar{width:6px}
+    .custom-scrollbar::-webkit-scrollbar-track{background:rgba(255,255,255,0.05)}
+    .custom-scrollbar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:3px}
+    .progress-ring{transform:rotate(-90deg)}
+    button:disabled{opacity:0.5;cursor:not-allowed}
+    .tab-active{background:rgba(6,182,212,0.2);border-color:rgb(6,182,212);color:rgb(6,182,212)}
+    :focus-visible{outline:2px solid rgb(6,182,212);outline-offset:2px}
   </style>
 
 </head>
 <body class="bg-slate-950 text-slate-200 min-h-screen">
 
-  <div class="fixed inset-0 pointer-events-none overflow-hidden">
+  <div class="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
     <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/20 rounded-full blur-[100px] animate-aurora-1"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/20 rounded-full blur-[100px] animate-aurora-2"></div>
   </div>
 
-  <div id="app" class="relative z-10 min-h-screen p-4 md:p-6">
-    <div class="w-full max-w-7xl mx-auto space-y-6">
+  <div id="app" class="relative z-10 min-h-screen p-4 md:p-6" role="application" aria-label="PDF Slide Studio Pro">
+    <div class="w-full max-w-7xl mx-auto space-y-5">
 
 ```
-  <!-- Header -->
-  <header class="text-center space-y-3 pt-2">
+  <header class="text-center space-y-2 pt-2">
     <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-      <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-300"></i>
-      <span class="text-[10px] uppercase tracking-widest font-bold text-cyan-300">PDF Slide Studio Pro v4</span>
+      <i data-lucide="zap" class="w-3.5 h-3.5 text-cyan-300" aria-hidden="true"></i>
+      <span class="text-[10px] uppercase tracking-widest font-bold text-cyan-300">PDF Slide Studio Pro v7.1</span>
     </div>
-    
     <div id="header-content">
-      <h1 class="text-2xl md:text-4xl font-extrabold text-white">テキスト消去＆再配置</h1>
-      <p class="text-slate-400 text-sm max-w-xl mx-auto mt-2">
-        元画像からテキストを消去し、編集可能なテキストボックスで再配置。実用レベルのPPTX。
-      </p>
+      <h1 class="text-2xl md:text-3xl font-extrabold text-white">高精度テキスト抽出</h1>
+      <p class="text-slate-400 text-sm max-w-xl mx-auto mt-2">図形を保護しながらテキストを消去。編集可能なPPTXを生成。</p>
     </div>
   </header>
 
-  <main id="main-content">
+  <main id="main-content" role="main">
     
-    <!-- Upload Area -->
     <div id="upload-area" class="bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10 overflow-hidden">
-      <input type="file" id="file-input" class="hidden" accept="application/pdf,.pdf">
+      <input type="file" id="file-input" class="hidden" accept="application/pdf,.pdf" aria-label="PDFファイルを選択">
       
-      <button type="button" id="upload-button" class="w-full p-8 md:p-12 text-center cursor-pointer group hover:bg-white/5 transition-all touch-feedback">
+      <button type="button" id="upload-button" class="w-full p-6 md:p-10 text-center cursor-pointer group hover:bg-white/5 transition-all touch-feedback" aria-describedby="upload-desc">
         <div class="flex flex-col items-center gap-4">
-          <div class="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-800/50 text-cyan-300">
-            <i data-lucide="file-text" class="w-8 h-8"></i>
+          <div class="w-14 h-14 rounded-xl flex items-center justify-center bg-slate-800/50 text-cyan-300 group-hover:scale-110 transition-transform" aria-hidden="true">
+            <i data-lucide="file-text" class="w-7 h-7"></i>
           </div>
           <div>
-            <p class="text-xl font-bold text-slate-200">PDFファイルを選択</p>
-            <p class="text-xs text-slate-500 mt-1">タップまたはドラッグ&ドロップ</p>
+            <p class="text-lg font-bold text-slate-200">PDFファイルを選択</p>
+            <p id="upload-desc" class="text-xs text-slate-500 mt-1">タップまたはドラッグ&ドロップ（最大100MB）</p>
           </div>
           
-          <!-- Settings -->
-          <div class="w-full max-w-md mt-4 space-y-3">
+          <div class="w-full max-w-xl mt-3 grid grid-cols-1 md:grid-cols-2 gap-3" role="group" aria-label="設定オプション">
             
-            <!-- OCR -->
-            <div class="p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
-              <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2">
-                <i data-lucide="scan-text" class="w-3.5 h-3.5"></i>OCR設定
-              </h4>
-              <div class="flex flex-wrap gap-2 justify-center">
-                <select id="ocr-language" class="bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300">
-                  <option value="jpn+eng">日本語+英語</option>
-                  <option value="jpn">日本語のみ</option>
-                  <option value="eng">英語のみ</option>
-                </select>
-              </div>
-            </div>
-            
-            <!-- Text Erase Settings -->
-            <div class="p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
-              <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2">
-                <i data-lucide="eraser" class="w-3.5 h-3.5"></i>テキスト消去設定
-              </h4>
+            <fieldset class="p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
+              <legend class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-1.5">
+                <i data-lucide="scan-text" class="w-3.5 h-3.5" aria-hidden="true"></i>OCR設定
+              </legend>
               <div class="space-y-2">
-                <label class="flex items-center justify-between">
-                  <span class="text-xs text-slate-400">消去マージン（px）</span>
-                  <div class="flex items-center gap-2">
-                    <input type="range" id="erase-margin" min="0" max="20" value="5" class="w-16 h-2">
-                    <span id="erase-margin-value" class="text-xs text-slate-300 w-6">5px</span>
-                  </div>
+                <label class="block">
+                  <span class="sr-only">OCR言語</span>
+                  <select id="ocr-language" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300">
+                    <option value="jpn+eng">日本語+英語</option>
+                    <option value="jpn">日本語のみ</option>
+                    <option value="eng">英語のみ</option>
+                  </select>
                 </label>
                 <label class="flex items-center justify-between">
                   <span class="text-xs text-slate-400">最小信頼度</span>
-                  <div class="flex items-center gap-2">
-                    <input type="range" id="min-confidence" min="30" max="90" value="50" class="w-16 h-2">
-                    <span id="min-confidence-value" class="text-xs text-slate-300 w-8">50%</span>
+                  <div class="flex items-center gap-1">
+                    <input type="range" id="min-confidence" min="30" max="90" value="50" class="w-14 h-1.5 accent-cyan-500" aria-describedby="min-confidence-value">
+                    <output id="min-confidence-value" class="text-xs text-slate-300 w-7" for="min-confidence">50%</output>
                   </div>
                 </label>
               </div>
-            </div>
+            </fieldset>
             
-            <!-- Font Settings -->
-            <div class="p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
-              <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2">
-                <i data-lucide="type" class="w-3.5 h-3.5"></i>フォント設定
-              </h4>
+            <fieldset class="p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
+              <legend class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-1.5">
+                <i data-lucide="eraser" class="w-3.5 h-3.5" aria-hidden="true"></i>消去設定
+              </legend>
               <div class="space-y-2">
                 <label class="flex items-center justify-between">
-                  <span class="text-xs text-slate-400">フォント</span>
-                  <select id="font-family" class="bg-slate-800/50 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300">
+                  <span class="text-xs text-slate-400">消去マージン</span>
+                  <div class="flex items-center gap-1">
+                    <input type="range" id="erase-margin" min="0" max="15" value="2" class="w-14 h-1.5 accent-cyan-500">
+                    <output id="erase-margin-value" class="text-xs text-slate-300 w-7" for="erase-margin">2px</output>
+                  </div>
+                </label>
+                <label class="flex items-center justify-between">
+                  <span class="text-xs text-slate-400">図形保護</span>
+                  <div class="flex items-center gap-1">
+                    <input type="range" id="shape-protection" min="0" max="100" value="70" class="w-14 h-1.5 accent-cyan-500">
+                    <output id="shape-protection-value" class="text-xs text-slate-300 w-7" for="shape-protection">70%</output>
+                  </div>
+                </label>
+              </div>
+            </fieldset>
+            
+            <fieldset class="p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
+              <legend class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-1.5">
+                <i data-lucide="type" class="w-3.5 h-3.5" aria-hidden="true"></i>フォント
+              </legend>
+              <div class="space-y-2">
+                <label class="block">
+                  <span class="sr-only">フォント</span>
+                  <select id="font-family" class="w-full bg-slate-800/50 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300">
                     <option value="Meiryo">メイリオ</option>
                     <option value="Yu Gothic">游ゴシック</option>
                     <option value="MS PGothic">MS Pゴシック</option>
                     <option value="Hiragino Sans">ヒラギノ角ゴ</option>
-                    <option value="Arial">Arial</option>
                   </select>
                 </label>
-                <label class="flex items-center gap-2">
+                <label class="flex items-center gap-1.5 cursor-pointer">
                   <input type="checkbox" id="auto-bold" checked class="w-3.5 h-3.5 rounded text-cyan-500">
-                  <span class="text-xs text-slate-400">大きい文字を太字に</span>
+                  <span class="text-xs text-slate-400">大きい文字を太字</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" id="detect-text-color" checked class="w-3.5 h-3.5 rounded text-cyan-500">
+                  <span class="text-xs text-slate-400">テキスト色を検出</span>
                 </label>
               </div>
-            </div>
+            </fieldset>
+            
+            <fieldset class="p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
+              <legend class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-1.5">
+                <i data-lucide="settings" class="w-3.5 h-3.5" aria-hidden="true"></i>処理
+              </legend>
+              <div class="space-y-1.5">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" id="detect-graphics" checked class="w-3.5 h-3.5 rounded text-cyan-500">
+                  <span class="text-xs text-slate-400">図形・写真を検出</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" id="smooth-erase" checked class="w-3.5 h-3.5 rounded text-cyan-500">
+                  <span class="text-xs text-slate-400">境界をスムーズ化</span>
+                </label>
+              </div>
+            </fieldset>
           </div>
           
-          <div class="mt-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-medium text-sm transition-all shadow-lg flex items-center gap-2">
-            <i data-lucide="folder-open" class="w-5 h-5"></i>
+          <div class="mt-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-medium text-sm transition-all shadow-lg flex items-center gap-2">
+            <i data-lucide="folder-open" class="w-4 h-4" aria-hidden="true"></i>
             ファイルを選択
           </div>
           
-          <div id="init-status" class="inline-flex items-center gap-2 px-3 py-1.5 bg-black/20 text-slate-400 text-xs rounded-full mt-2">
-            <i data-lucide="loader-2" class="w-3 h-3 animate-spin text-cyan-400"></i>
-            <span>OCRエンジン準備中...</span>
+          <div id="init-status" class="inline-flex items-center gap-2 px-3 py-1 bg-black/20 text-slate-400 text-xs rounded-full" role="status" aria-live="polite">
+            <i data-lucide="loader-2" class="w-3 h-3 animate-spin text-cyan-400" aria-hidden="true"></i>
+            <span>準備中...</span>
           </div>
         </div>
       </button>
     </div>
 
-    <!-- Processing -->
-    <div id="processing-area" class="hidden bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10 p-12 flex-col items-center justify-center min-h-[350px]">
-      <div class="relative w-32 h-32 mb-6">
-        <svg class="w-full h-full progress-ring" viewBox="0 0 100 100">
+    <div id="processing-area" class="hidden bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10 p-10 flex-col items-center justify-center min-h-[300px]" role="status" aria-live="polite" aria-busy="true">
+      <div class="relative w-28 h-28 mb-5">
+        <svg class="w-full h-full progress-ring" viewBox="0 0 100 100" aria-hidden="true">
           <circle class="text-slate-800/50 stroke-current" stroke-width="3" cx="50" cy="50" r="46" fill="transparent"></circle>
-          <circle id="progress-circle" class="text-cyan-400 stroke-current" stroke-width="3" stroke-linecap="round" cx="50" cy="50" r="46" fill="transparent" stroke-dasharray="0 289" style="filter: drop-shadow(0 0 6px rgba(34,211,238,0.8));"></circle>
+          <circle id="progress-circle" class="text-cyan-400 stroke-current" stroke-width="3" stroke-linecap="round" cx="50" cy="50" r="46" fill="transparent" stroke-dasharray="0 289" style="filter:drop-shadow(0 0 6px rgba(34,211,238,0.8))"></circle>
         </svg>
         <div class="absolute inset-0 flex items-center justify-center">
-          <span id="progress-percent" class="text-2xl font-bold text-white">0%</span>
+          <span id="progress-percent" class="text-xl font-bold text-white" aria-live="polite">0%</span>
         </div>
       </div>
-      <h3 id="progress-message" class="text-lg font-bold text-white mb-1 animate-pulse">処理中...</h3>
+      <h3 id="progress-message" class="text-base font-bold text-white mb-1">処理中...</h3>
       <p id="progress-detail" class="text-sm text-slate-400"></p>
-      <button id="cancel-button" class="mt-4 px-6 py-2 text-sm text-slate-500 hover:text-white rounded-full hover:bg-white/10 transition-all">キャンセル</button>
+      <p id="progress-sub" class="text-xs text-slate-500 mt-1"></p>
+      <button id="cancel-button" class="mt-4 px-5 py-2 text-sm text-slate-500 hover:text-white rounded-full hover:bg-white/10 transition-all">キャンセル</button>
     </div>
 
-    <!-- Editor -->
-    <div id="editor-area" class="hidden space-y-4">
+    <div id="editor-area" class="hidden space-y-4" role="region" aria-label="編集結果">
       
-      <!-- Controls -->
-      <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-white/5 border border-white/10 rounded-xl p-3">
-        <div class="flex gap-3 items-center justify-center md:justify-start">
-          <span id="file-name" class="text-sm text-cyan-300 font-medium truncate max-w-[120px]"></span>
+      <div class="flex flex-col md:flex-row gap-2 items-stretch md:items-center justify-between bg-white/5 border border-white/10 rounded-xl p-2.5">
+        <div class="flex gap-2 items-center justify-center md:justify-start flex-wrap">
+          <span id="file-name" class="text-sm text-cyan-300 font-medium truncate max-w-[100px]"></span>
           <span id="slide-count" class="text-xs text-slate-500"></span>
+          <span class="text-xs text-slate-600" aria-hidden="true">|</span>
+          <span class="text-xs text-green-400"><span id="stat-blocks">0</span>B</span>
+          <span class="text-xs text-blue-400"><span id="stat-graphics">0</span>G</span>
+          <span id="processing-time" class="text-xs text-slate-500"></span>
         </div>
-        <div class="flex gap-2 flex-wrap justify-center">
-          <button id="download-clean-pptx-btn" class="flex-1 md:flex-none px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 shadow-lg touch-feedback" title="テキスト消去済みPPTX">
-            <i data-lucide="file-check" class="w-4 h-4"></i>
+        <div class="flex gap-1.5 flex-wrap justify-center" role="toolbar" aria-label="エクスポート">
+          <button id="download-clean-pptx-btn" class="flex-1 md:flex-none px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1 shadow-lg touch-feedback">
+            <i data-lucide="file-check" class="w-3.5 h-3.5" aria-hidden="true"></i>
             <span>クリーンPPTX</span>
           </button>
-          <button id="download-zip-btn" class="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-medium transition-all touch-feedback" title="消去済み画像ZIP">
-            <i data-lucide="file-archive" class="w-4 h-4"></i>
+          <button id="download-zip-btn" class="px-2.5 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-medium transition-all touch-feedback" title="消去済み画像ZIP" aria-label="ZIPダウンロード">
+            <i data-lucide="file-archive" class="w-3.5 h-3.5" aria-hidden="true"></i>
           </button>
-          <button id="download-json-btn" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-all touch-feedback" title="JSON">
-            <i data-lucide="file-json" class="w-4 h-4"></i>
+          <button id="download-json-btn" class="px-2.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-all touch-feedback" title="JSONデータ" aria-label="JSONダウンロード">
+            <i data-lucide="file-json" class="w-3.5 h-3.5" aria-hidden="true"></i>
           </button>
-          <button id="reset-btn" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-medium transition-all touch-feedback" title="リセット">
-            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <button id="reset-btn" class="px-2.5 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-medium transition-all touch-feedback" title="リセット" aria-label="リセット">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5" aria-hidden="true"></i>
           </button>
         </div>
       </div>
 
-      <!-- Stats -->
-      <div class="flex flex-wrap gap-2 justify-center text-xs">
-        <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full"><span id="stat-blocks">0</span> ブロック</span>
-        <span class="px-3 py-1 bg-green-500/20 text-green-300 rounded-full"><span id="stat-chars">0</span> 文字</span>
-      </div>
-
-      <!-- Tabs -->
-      <div class="flex gap-2 overflow-x-auto">
-        <button id="tab-compare" class="tab-btn tab-active px-4 py-2 rounded-lg border border-white/10 text-sm font-medium flex items-center gap-2 whitespace-nowrap">
-          <i data-lucide="columns" class="w-4 h-4"></i>比較
+      <div class="flex gap-1.5 overflow-x-auto" role="tablist" aria-label="表示切り替え">
+        <button id="tab-compare" class="tab-btn tab-active px-3 py-1.5 rounded-lg border border-white/10 text-xs font-medium flex items-center gap-1.5" role="tab" aria-selected="true" aria-controls="tab-content-compare">
+          <i data-lucide="columns" class="w-3.5 h-3.5" aria-hidden="true"></i>比較
         </button>
-        <button id="tab-blocks" class="tab-btn px-4 py-2 rounded-lg border border-white/10 text-sm font-medium flex items-center gap-2 whitespace-nowrap text-slate-400 hover:text-white">
-          <i data-lucide="list" class="w-4 h-4"></i>ブロック
+        <button id="tab-blocks" class="tab-btn px-3 py-1.5 rounded-lg border border-white/10 text-xs font-medium flex items-center gap-1.5 text-slate-400" role="tab" aria-selected="false" aria-controls="tab-content-blocks">
+          <i data-lucide="list" class="w-3.5 h-3.5" aria-hidden="true"></i>テキスト
+        </button>
+        <button id="tab-graphics" class="tab-btn px-3 py-1.5 rounded-lg border border-white/10 text-xs font-medium flex items-center gap-1.5 text-slate-400" role="tab" aria-selected="false" aria-controls="tab-content-graphics">
+          <i data-lucide="image" class="w-3.5 h-3.5" aria-hidden="true"></i>図形
         </button>
       </div>
 
-      <!-- Compare Tab -->
-      <div id="tab-content-compare" class="tab-content">
-        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-bold text-white">元画像 vs テキスト消去後</h3>
-            <div class="flex items-center gap-2">
-              <button id="prev-compare" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-all">
-                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+      <div id="tab-content-compare" class="tab-content" role="tabpanel" aria-labelledby="tab-compare">
+        <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-white">元画像 vs 消去後</h3>
+            <div class="flex items-center gap-1.5">
+              <button id="prev-compare" class="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-all" aria-label="前のスライド">
+                <i data-lucide="chevron-left" class="w-4 h-4" aria-hidden="true"></i>
               </button>
-              <span id="compare-index" class="text-xs text-slate-400">1/1</span>
-              <button id="next-compare" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-all">
-                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              <span id="compare-index" class="text-xs text-slate-400 min-w-[40px] text-center" aria-live="polite">1/1</span>
+              <button id="next-compare" class="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-all" aria-label="次のスライド">
+                <i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i>
               </button>
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <p class="text-xs text-slate-500 mb-2 text-center">元画像</p>
+              <p class="text-xs text-slate-500 mb-1.5 text-center">元画像</p>
               <div id="original-preview" class="bg-black/30 rounded-lg overflow-hidden"></div>
             </div>
             <div>
-              <p class="text-xs text-slate-500 mb-2 text-center">テキスト消去後</p>
+              <p class="text-xs text-slate-500 mb-1.5 text-center">テキスト消去後</p>
               <div id="erased-preview" class="bg-black/30 rounded-lg overflow-hidden"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Blocks Tab -->
-      <div id="tab-content-blocks" class="tab-content hidden">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div class="bg-white/5 border border-white/10 rounded-xl p-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
-            <h3 class="text-sm font-bold text-white mb-3">スライド選択</h3>
-            <div id="block-slide-list" class="space-y-2"></div>
+      <div id="tab-content-blocks" class="tab-content hidden" role="tabpanel" aria-labelledby="tab-blocks">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div class="bg-white/5 border border-white/10 rounded-xl p-3 max-h-[55vh] overflow-y-auto custom-scrollbar">
+            <h3 class="text-xs font-bold text-white mb-2">スライド</h3>
+            <div id="block-slide-list" class="space-y-1.5" role="listbox" aria-label="スライド選択"></div>
           </div>
-          <div class="lg:col-span-2 bg-white/5 border border-white/10 rounded-xl p-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
-            <h3 class="text-sm font-bold text-white mb-3">テキストブロック <span id="block-count" class="text-xs text-slate-400"></span></h3>
-            <div id="block-list" class="space-y-2"></div>
+          <div class="lg:col-span-2 bg-white/5 border border-white/10 rounded-xl p-3 max-h-[55vh] overflow-y-auto custom-scrollbar">
+            <h3 class="text-xs font-bold text-white mb-2">テキストブロック <span id="block-count" class="text-slate-400"></span></h3>
+            <div id="block-list" class="space-y-1.5" role="list" aria-label="テキストブロック一覧"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-content-graphics" class="tab-content hidden" role="tabpanel" aria-labelledby="tab-graphics">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div class="bg-white/5 border border-white/10 rounded-xl p-3 max-h-[55vh] overflow-y-auto custom-scrollbar">
+            <h3 class="text-xs font-bold text-white mb-2">スライド</h3>
+            <div id="graphics-slide-list" class="space-y-1.5" role="listbox" aria-label="スライド選択"></div>
+          </div>
+          <div class="lg:col-span-2 bg-white/5 border border-white/10 rounded-xl p-3 max-h-[55vh] overflow-y-auto custom-scrollbar">
+            <h3 class="text-xs font-bold text-white mb-2">検出された図形 <span id="graphics-count" class="text-slate-400"></span></h3>
+            <div id="graphics-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="list" aria-label="図形一覧"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Error -->
-    <div id="error-area" class="hidden bg-white/5 rounded-2xl border border-white/10 p-12 text-center space-y-4">
-      <div class="w-14 h-14 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
-        <i data-lucide="x" class="w-7 h-7 text-red-500"></i>
+    <div id="error-area" class="hidden bg-white/5 rounded-2xl border border-white/10 p-10 text-center space-y-3" role="alert" aria-live="assertive">
+      <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto" aria-hidden="true">
+        <i data-lucide="x" class="w-6 h-6 text-red-500"></i>
       </div>
-      <h3 class="text-lg font-bold text-slate-200">エラー</h3>
+      <h3 class="text-base font-bold text-slate-200">エラー</h3>
       <p id="error-message" class="text-slate-500 text-sm"></p>
-      <button id="retry-btn" class="px-6 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all">リトライ</button>
+      <button id="retry-btn" class="px-5 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all text-sm">リトライ</button>
     </div>
   </main>
 
-  <footer class="text-center text-xs text-slate-600 py-4">
-    PDF Slide Studio Pro v4 • Text Erase & Replace
-  </footer>
+  <footer class="text-center text-xs text-slate-600 py-3">PDF Slide Studio Pro v7.1</footer>
 </div>
 ```
 
   </div>
 
-  <!-- Toast -->
-
-  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden px-5 py-2.5 bg-slate-800 border border-slate-700 text-white rounded-xl shadow-xl">
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-xl shadow-xl" role="status" aria-live="polite">
     <div class="flex items-center gap-2">
-      <i id="toast-icon" data-lucide="check-circle" class="w-4 h-4 text-green-400"></i>
+      <i id="toast-icon" data-lucide="check-circle" class="w-4 h-4 text-green-400" aria-hidden="true"></i>
       <span id="toast-message" class="text-sm">完了</span>
     </div>
   </div>
 
   <script>
+    'use strict';
+    
+    /**
+     * PDF Slide Studio Pro v7.1
+     * 上級SEレビュー反映版
+     */
+    
+    // ============================================
+    // 設定定数
+    // ============================================
+    const CONFIG = Object.freeze({
+      CANVAS_SCALE: 2.0,           // PDF→Canvas変換時のスケール
+      MAX_GRAPHICS: 20,            // 検出する図形の最大数
+      MIN_GRAPHIC_SIZE: 50,        // 図形の最小サイズ(px)
+      EDGE_THRESHOLD: 45,          // エッジ検出閾値
+      COLOR_QUANTIZE: 8,           // 色量子化ステップ
+      PROGRESS_CIRCUMFERENCE: 289, // SVG進捗リングの周長
+      FLOOD_FILL_MAX: 40000,       // FloodFillの最大ピクセル数
+      MAX_FILE_SIZE: 100 * 1024 * 1024,  // 最大ファイルサイズ (100MB)
+      TEXT_BRIGHTNESS_THRESHOLD: 180,     // テキスト色判定閾値
+      PARAGRAPH_MERGE_THRESHOLD: 28,      // 段落マージ閾値(px)
+      LINE_OVERLAP_RATIO: 0.35            // 行グループ化重複率
+    });
+    
+    // エラーメッセージ
+    const ERROR_MESSAGES = Object.freeze({
+      FILE_TOO_LARGE: 'ファイルサイズが大きすぎます（最大100MB）',
+      INVALID_PDF: 'PDFファイルを読み込めませんでした',
+      OCR_FAILED: 'テキスト認識に失敗しました',
+      PPTX_FAILED: 'PPTX作成に失敗しました',
+      UNKNOWN: '予期せぬエラーが発生しました'
+    });
+    
+    // PDF.js初期化
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+    // ============================================
+    // ステート管理
+    // ============================================
     const state = {
       file: null,
       images: [],
@@ -312,315 +362,432 @@
       isExporting: false,
       currentCompareIndex: 0,
       selectedSlideIndex: null,
-      // Settings
+      selectedGraphicsSlideIndex: null,
+      startTime: 0,
+      // 設定
       ocrLanguage: 'jpn+eng',
-      eraseMargin: 5,
+      eraseMargin: 2,
       minConfidence: 50,
+      shapeProtection: 70,
       fontFamily: 'Meiryo',
-      autoBold: true
+      autoBold: true,
+      detectTextColor: true,
+      detectGraphics: true,
+      smoothErase: true
     };
 
-    const el = {
-      fileInput: document.getElementById('file-input'),
-      uploadArea: document.getElementById('upload-area'),
-      uploadButton: document.getElementById('upload-button'),
-      processingArea: document.getElementById('processing-area'),
-      editorArea: document.getElementById('editor-area'),
-      errorArea: document.getElementById('error-area'),
-      initStatus: document.getElementById('init-status'),
-      headerContent: document.getElementById('header-content'),
-      progressCircle: document.getElementById('progress-circle'),
-      progressPercent: document.getElementById('progress-percent'),
-      progressMessage: document.getElementById('progress-message'),
-      progressDetail: document.getElementById('progress-detail'),
-      cancelButton: document.getElementById('cancel-button'),
-      fileName: document.getElementById('file-name'),
-      slideCount: document.getElementById('slide-count'),
-      statBlocks: document.getElementById('stat-blocks'),
-      statChars: document.getElementById('stat-chars'),
-      downloadCleanPptxBtn: document.getElementById('download-clean-pptx-btn'),
-      downloadZipBtn: document.getElementById('download-zip-btn'),
-      downloadJsonBtn: document.getElementById('download-json-btn'),
-      resetBtn: document.getElementById('reset-btn'),
-      retryBtn: document.getElementById('retry-btn'),
-      errorMessage: document.getElementById('error-message'),
-      toast: document.getElementById('toast'),
-      toastIcon: document.getElementById('toast-icon'),
-      toastMessage: document.getElementById('toast-message'),
-      // Settings
-      ocrLanguage: document.getElementById('ocr-language'),
-      eraseMargin: document.getElementById('erase-margin'),
-      eraseMarginValue: document.getElementById('erase-margin-value'),
-      minConfidence: document.getElementById('min-confidence'),
-      minConfidenceValue: document.getElementById('min-confidence-value'),
-      fontFamily: document.getElementById('font-family'),
-      autoBold: document.getElementById('auto-bold'),
-      // Tabs & Compare
-      tabCompare: document.getElementById('tab-compare'),
-      tabBlocks: document.getElementById('tab-blocks'),
-      tabContentCompare: document.getElementById('tab-content-compare'),
-      tabContentBlocks: document.getElementById('tab-content-blocks'),
-      originalPreview: document.getElementById('original-preview'),
-      erasedPreview: document.getElementById('erased-preview'),
-      compareIndex: document.getElementById('compare-index'),
-      prevCompare: document.getElementById('prev-compare'),
-      nextCompare: document.getElementById('next-compare'),
-      blockSlideList: document.getElementById('block-slide-list'),
-      blockList: document.getElementById('block-list'),
-      blockCount: document.getElementById('block-count')
-    };
+    // DOM要素キャッシュ
+    const el = {};
+    
+    // ============================================
+    // ユーティリティ関数
+    // ============================================
+    const escapeHtml = s => s ? s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]) : '';
+    const rgbToHex = (r, g, b) => ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+    const formatTime = ms => ms < 1000 ? `${ms|0}ms` : `${(ms/1000).toFixed(1)}秒`;
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const formatFileSize = bytes => bytes < 1024*1024 ? `${(bytes/1024).toFixed(1)}KB` : `${(bytes/1024/1024).toFixed(1)}MB`;
 
-    lucide.createIcons();
-
-    // Settings listeners
-    el.eraseMargin.addEventListener('input', e => {
-      state.eraseMargin = parseInt(e.target.value);
-      el.eraseMarginValue.textContent = `${state.eraseMargin}px`;
-    });
-    el.minConfidence.addEventListener('input', e => {
-      state.minConfidence = parseInt(e.target.value);
-      el.minConfidenceValue.textContent = `${state.minConfidence}%`;
-    });
-
-    // Init
-    (async () => {
-      if (window.Tesseract) {
-        el.initStatus.innerHTML = '<i data-lucide="check-circle" class="w-3 h-3 text-green-400"></i><span>準備完了</span>';
-        lucide.createIcons();
-        setTimeout(() => el.initStatus.classList.add('hidden'), 1500);
+    // TypedArrayマスク操作
+    const createMask = (w, h) => new Uint8Array(w * h);
+    
+    function setMaskRect(mask, w, x0, y0, x1, y1) {
+      for (let y = y0; y < y1; y++) {
+        const row = y * w;
+        for (let x = x0; x < x1; x++) mask[row + x] = 1;
       }
-    })();
+    }
+
+    // グレースケール変換
+    function toGrayscale(data, length) {
+      const gray = new Uint8Array(length);
+      for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+        gray[j] = (data[i] * 77 + data[i+1] * 150 + data[i+2] * 29) >> 8;
+      }
+      return gray;
+    }
+
+    // Sobelエッジ検出
+    function detectEdges(gray, w, h) {
+      const edges = new Uint8Array(w * h);
+      for (let y = 1; y < h - 1; y++) {
+        const row = y * w, rowP = row - w, rowN = row + w;
+        for (let x = 1; x < w - 1; x++) {
+          const gx = -gray[rowP+x-1] + gray[rowP+x+1] - (gray[row+x-1]<<1) + (gray[row+x+1]<<1) - gray[rowN+x-1] + gray[rowN+x+1];
+          const gy = -gray[rowP+x-1] - (gray[rowP+x]<<1) - gray[rowP+x+1] + gray[rowN+x-1] + (gray[rowN+x]<<1) + gray[rowN+x+1];
+          edges[row+x] = Math.min(255, Math.sqrt(gx*gx + gy*gy)|0);
+        }
+      }
+      return edges;
+    }
 
     // ============================================
-    // Text Erase Algorithm
+    // 図形検出
     // ============================================
-    function eraseTextFromCanvas(canvas, blocks, margin = 5) {
-      const ctx = canvas.getContext('2d');
-      const width = canvas.width;
-      const height = canvas.height;
+    function detectGraphics(data, gray, edges, w, h, textBlocks) {
+      const textMask = createMask(w, h);
+      const margin = 15;
       
-      // 元の画像データを取得
-      const imageData = ctx.getImageData(0, 0, width, height);
-      const data = imageData.data;
+      for (const block of textBlocks) {
+        if (!block.bbox) continue;
+        const x0 = clamp(Math.floor(block.bbox.x0) - margin, 0, w);
+        const y0 = clamp(Math.floor(block.bbox.y0) - margin, 0, h);
+        const x1 = clamp(Math.ceil(block.bbox.x1) + margin, 0, w);
+        const y1 = clamp(Math.ceil(block.bbox.y1) + margin, 0, h);
+        setMaskRect(textMask, w, x0, y0, x1, y1);
+      }
       
-      blocks.forEach(block => {
-        if (!block.bbox) return;
+      const visited = createMask(w, h);
+      const graphics = [];
+      const threshold = CONFIG.EDGE_THRESHOLD;
+      const minArea = 800, maxArea = w * h * 0.35;
+      
+      // FloodFill用スタック（事前確保）
+      const stackX = new Int32Array(CONFIG.FLOOD_FILL_MAX);
+      const stackY = new Int32Array(CONFIG.FLOOD_FILL_MAX);
+      
+      function floodFill(startX, startY) {
+        let sp = 0;
+        stackX[sp] = startX; stackY[sp] = startY; sp++;
         
-        const x0 = Math.max(0, Math.floor(block.bbox.x0) - margin);
-        const y0 = Math.max(0, Math.floor(block.bbox.y0) - margin);
-        const x1 = Math.min(width, Math.ceil(block.bbox.x1) + margin);
-        const y1 = Math.min(height, Math.ceil(block.bbox.y1) + margin);
+        let minX = startX, maxX = startX, minY = startY, maxY = startY;
+        let colorR = 0, colorG = 0, colorB = 0, count = 0;
         
-        // 周辺の背景色を取得（領域の上下左右の端から）
-        const bgColor = estimateBackgroundColor(data, width, height, x0, y0, x1, y1);
-        
-        // 領域を背景色で塗りつぶし
-        for (let y = y0; y < y1; y++) {
-          for (let x = x0; x < x1; x++) {
-            const idx = (y * width + x) * 4;
-            data[idx] = bgColor.r;
-            data[idx + 1] = bgColor.g;
-            data[idx + 2] = bgColor.b;
-            // アルファは維持
+        while (sp > 0 && count < CONFIG.FLOOD_FILL_MAX) {
+          sp--;
+          const x = stackX[sp], y = stackY[sp];
+          
+          if (x < 0 || x >= w || y < 0 || y >= h) continue;
+          const idx = y * w + x;
+          if (visited[idx] || textMask[idx]) continue;
+          if (edges[idx] < threshold && count > 0) continue;
+          
+          visited[idx] = 1;
+          count++;
+          
+          const pIdx = idx << 2;
+          colorR += data[pIdx]; colorG += data[pIdx+1]; colorB += data[pIdx+2];
+          
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+          
+          if (sp < CONFIG.FLOOD_FILL_MAX - 4) {
+            stackX[sp] = x+1; stackY[sp] = y; sp++;
+            stackX[sp] = x-1; stackY[sp] = y; sp++;
+            stackX[sp] = x; stackY[sp] = y+1; sp++;
+            stackX[sp] = x; stackY[sp] = y-1; sp++;
           }
         }
-      });
+        
+        return { minX, maxX, minY, maxY, count, colorR, colorG, colorB };
+      }
       
-      ctx.putImageData(imageData, 0, 0);
-      return canvas;
-    }
-
-    function estimateBackgroundColor(data, width, height, x0, y0, x1, y1) {
-      const samples = [];
-      
-      // 上端
-      if (y0 > 2) {
-        for (let x = x0; x < x1; x += 5) {
-          const idx = ((y0 - 2) * width + x) * 4;
-          samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+      for (let y = 25; y < h - 25; y += 35) {
+        for (let x = 25; x < w - 25; x += 35) {
+          const idx = y * w + x;
+          if (visited[idx] || textMask[idx] || edges[idx] < threshold) continue;
+          
+          const r = floodFill(x, y);
+          if (r.count < minArea || r.count > maxArea) continue;
+          
+          const gw = r.maxX - r.minX, gh = r.maxY - r.minY;
+          if (gw < CONFIG.MIN_GRAPHIC_SIZE || gh < CONFIG.MIN_GRAPHIC_SIZE) continue;
+          
+          const avgR = (r.colorR / r.count)|0;
+          const avgG = (r.colorG / r.count)|0;
+          const avgB = (r.colorB / r.count)|0;
+          
+          // 色の多様性チェック
+          let variance = 0, sampleCount = 0;
+          const step = Math.max(3, Math.floor(Math.sqrt(r.count / 40)));
+          for (let sy = r.minY; sy <= r.maxY && sampleCount < 40; sy += step) {
+            for (let sx = r.minX; sx <= r.maxX && sampleCount < 40; sx += step) {
+              const sIdx = (sy * w + sx) << 2;
+              variance += Math.abs(data[sIdx] - avgR) + Math.abs(data[sIdx+1] - avgG) + Math.abs(data[sIdx+2] - avgB);
+              sampleCount++;
+            }
+          }
+          variance = sampleCount > 0 ? variance / sampleCount : 0;
+          
+          const isPhoto = variance > 45;
+          const fillRatio = r.count / (gw * gh);
+          
+          graphics.push({
+            id: graphics.length,
+            type: isPhoto ? 'photo' : (fillRatio > 0.65 ? 'filled' : 'outline'),
+            x: r.minX, y: r.minY, width: gw, height: gh,
+            area: r.count, isPhoto,
+            colorHex: rgbToHex(avgR, avgG, avgB)
+          });
         }
       }
       
-      // 下端
-      if (y1 < height - 2) {
-        for (let x = x0; x < x1; x += 5) {
-          const idx = ((y1 + 2) * width + x) * 4;
-          samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
-        }
-      }
-      
-      // 左端
-      if (x0 > 2) {
-        for (let y = y0; y < y1; y += 5) {
-          const idx = (y * width + (x0 - 2)) * 4;
-          samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
-        }
-      }
-      
-      // 右端
-      if (x1 < width - 2) {
-        for (let y = y0; y < y1; y += 5) {
-          const idx = (y * width + (x1 + 2)) * 4;
-          samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
-        }
-      }
-      
-      if (samples.length === 0) {
-        return { r: 255, g: 255, b: 255 };
-      }
-      
-      // 最頻出色を探す（単純な平均だと中間色になるため）
-      const colorCounts = {};
-      samples.forEach(s => {
-        // 色を量子化
-        const qr = Math.round(s.r / 16) * 16;
-        const qg = Math.round(s.g / 16) * 16;
-        const qb = Math.round(s.b / 16) * 16;
-        const key = `${qr},${qg},${qb}`;
-        colorCounts[key] = (colorCounts[key] || 0) + 1;
-      });
-      
-      let maxCount = 0;
-      let dominantColor = '255,255,255';
-      for (const [color, count] of Object.entries(colorCounts)) {
-        if (count > maxCount) {
-          maxCount = count;
-          dominantColor = color;
-        }
-      }
-      
-      const [r, g, b] = dominantColor.split(',').map(Number);
-      return { r, g, b };
+      graphics.sort((a, b) => b.area - a.area);
+      return graphics.slice(0, CONFIG.MAX_GRAPHICS);
     }
 
     // ============================================
-    // Smart Text Merge
+    // テキスト消去
     // ============================================
-    function smartMergeLines(lines, canvasWidth, canvasHeight) {
+    function eraseText(data, edges, w, h, blocks, graphics, margin, protection, smooth) {
+      const protectedMask = createMask(w, h);
+      
+      for (const g of graphics) {
+        const m = g.isPhoto ? 20 : 8;
+        const x0 = clamp(g.x - m, 0, w), y0 = clamp(g.y - m, 0, h);
+        const x1 = clamp(g.x + g.width + m, 0, w), y1 = clamp(g.y + g.height + m, 0, h);
+        setMaskRect(protectedMask, w, x0, y0, x1, y1);
+      }
+      
+      const protThreshold = (protection / 100) * 255;
+      
+      for (const block of blocks) {
+        if (!block.bbox) continue;
+        
+        const bx0 = clamp(Math.floor(block.bbox.x0) - margin, 0, w);
+        const by0 = clamp(Math.floor(block.bbox.y0) - margin, 0, h);
+        const bx1 = clamp(Math.ceil(block.bbox.x1) + margin, 0, w);
+        const by1 = clamp(Math.ceil(block.bbox.y1) + margin, 0, h);
+        
+        const bgColor = estimateBgColor(data, w, h, bx0, by0, bx1, by1, protectedMask);
+        
+        for (let y = by0; y < by1; y++) {
+          const row = y * w;
+          for (let x = bx0; x < bx1; x++) {
+            const idx = row + x;
+            if (protectedMask[idx]) continue;
+            
+            if (edges[idx] > protThreshold) {
+              let ns = 0;
+              for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                  const ni = (y+dy)*w + (x+dx);
+                  if (ni >= 0 && ni < edges.length) ns += edges[ni];
+                }
+              }
+              if (ns > protThreshold * 6) continue;
+            }
+            
+            const pIdx = idx << 2;
+            
+            if (smooth) {
+              const distX = Math.min(x - bx0, bx1 - 1 - x);
+              const distY = Math.min(y - by0, by1 - 1 - y);
+              const dist = Math.min(distX, distY);
+              
+              if (dist < 2) {
+                const blend = dist / 2;
+                data[pIdx] = (data[pIdx] * blend + bgColor.r * (1 - blend))|0;
+                data[pIdx+1] = (data[pIdx+1] * blend + bgColor.g * (1 - blend))|0;
+                data[pIdx+2] = (data[pIdx+2] * blend + bgColor.b * (1 - blend))|0;
+              } else {
+                data[pIdx] = bgColor.r; data[pIdx+1] = bgColor.g; data[pIdx+2] = bgColor.b;
+              }
+            } else {
+              data[pIdx] = bgColor.r; data[pIdx+1] = bgColor.g; data[pIdx+2] = bgColor.b;
+            }
+          }
+        }
+      }
+    }
+
+    function estimateBgColor(data, w, h, x0, y0, x1, y1, protMask) {
+      const colorCounts = new Map();
+      const sm = 4;
+      let total = 0;
+      
+      const sample = (x, y) => {
+        if (x < 0 || x >= w || y < 0 || y >= h) return;
+        const idx = y * w + x;
+        if (protMask[idx]) return;
+        
+        const pIdx = idx << 2;
+        const qr = (data[pIdx] / CONFIG.COLOR_QUANTIZE | 0) * CONFIG.COLOR_QUANTIZE;
+        const qg = (data[pIdx+1] / CONFIG.COLOR_QUANTIZE | 0) * CONFIG.COLOR_QUANTIZE;
+        const qb = (data[pIdx+2] / CONFIG.COLOR_QUANTIZE | 0) * CONFIG.COLOR_QUANTIZE;
+        const key = (qr << 16) | (qg << 8) | qb;
+        
+        const e = colorCounts.get(key);
+        if (e) { e.count++; e.r += data[pIdx]; e.g += data[pIdx+1]; e.b += data[pIdx+2]; }
+        else colorCounts.set(key, { count: 1, r: data[pIdx], g: data[pIdx+1], b: data[pIdx+2] });
+        total++;
+      };
+      
+      for (let x = x0; x < x1; x += 2) {
+        for (let d = 1; d <= sm; d++) { sample(x, y0 - d); sample(x, y1 + d); }
+      }
+      for (let y = y0; y < y1; y += 2) {
+        for (let d = 1; d <= sm; d++) { sample(x0 - d, y); sample(x1 + d, y); }
+      }
+      
+      if (total === 0) return { r: 255, g: 255, b: 255 };
+      
+      let maxCount = 0, dominant = { r: 255, g: 255, b: 255 };
+      for (const v of colorCounts.values()) {
+        if (v.count > maxCount) {
+          maxCount = v.count;
+          dominant = { r: (v.r/v.count)|0, g: (v.g/v.count)|0, b: (v.b/v.count)|0 };
+        }
+      }
+      return dominant;
+    }
+
+    // ============================================
+    // テキスト色検出
+    // ============================================
+    function detectTextColor(data, w, h, bbox) {
+      if (!bbox) return '333333';
+      
+      const x0 = clamp(Math.floor(bbox.x0), 0, w);
+      const y0 = clamp(Math.floor(bbox.y0), 0, h);
+      const x1 = clamp(Math.ceil(bbox.x1), 0, w);
+      const y1 = clamp(Math.ceil(bbox.y1), 0, h);
+      
+      const darkColors = new Map();
+      
+      for (let y = y0; y < y1; y += 2) {
+        for (let x = x0; x < x1; x += 2) {
+          const idx = (y * w + x) << 2;
+          const r = data[idx], g = data[idx+1], b = data[idx+2];
+          const brightness = (r + g + b) / 3;
+          
+          if (brightness < CONFIG.TEXT_BRIGHTNESS_THRESHOLD) {
+            const qr = (r/32|0)*32, qg = (g/32|0)*32, qb = (b/32|0)*32;
+            const key = (qr << 16) | (qg << 8) | qb;
+            
+            const e = darkColors.get(key);
+            if (e) { e.count++; e.r += r; e.g += g; e.b += b; }
+            else darkColors.set(key, { count: 1, r, g, b });
+          }
+        }
+      }
+      
+      if (darkColors.size === 0) return '333333';
+      
+      let maxCount = 0, dom = { r: 51, g: 51, b: 51 };
+      for (const v of darkColors.values()) {
+        if (v.count > maxCount) {
+          maxCount = v.count;
+          dom = { r: (v.r/v.count)|0, g: (v.g/v.count)|0, b: (v.b/v.count)|0 };
+        }
+      }
+      return rgbToHex(dom.r, dom.g, dom.b);
+    }
+
+    // ============================================
+    // テキストマージ
+    // ============================================
+    function mergeTextLines(lines, w, h, imageData) {
       if (!lines || lines.length === 0) return [];
       
-      // フィルタ
-      let filtered = lines.filter(line => {
-        if (!line.text || !line.bbox) return false;
-        if (line.confidence < state.minConfidence) return false;
-        const text = line.text.trim();
-        if (text.length < 2) return false;
-        if (/^[\s\-_=|\\\/\[\]{}()"'`~!@#$%^&*]+$/.test(text)) return false;
+      const minConf = state.minConfidence;
+      
+      const filtered = lines.filter(l => {
+        if (!l.text || !l.bbox || l.confidence < minConf) return false;
+        const t = l.text.trim();
+        if (t.length < 2) return false;
+        if (/^[\s\-_=|\\\/\[\]{}()"'`~!@#$%^&*.,;:]+$/.test(t)) return false;
+        if (/^[0-9\s.]+$/.test(t) && t.length < 3) return false;
         return true;
       });
       
       if (filtered.length === 0) return [];
       
-      // Y座標でソート
       filtered.sort((a, b) => a.bbox.y0 - b.bbox.y0);
       
       // 行グループ化
       const lineGroups = [];
-      let currentGroup = null;
+      let cg = null;
       
-      filtered.forEach(line => {
-        if (!currentGroup) {
-          currentGroup = {
-            lines: [line],
-            y0: line.bbox.y0, y1: line.bbox.y1,
-            x0: line.bbox.x0, x1: line.bbox.x1
-          };
+      for (const line of filtered) {
+        if (!cg) {
+          cg = { lines: [line], y0: line.bbox.y0, y1: line.bbox.y1, x0: line.bbox.x0, x1: line.bbox.x1 };
         } else {
-          const overlapY = Math.min(currentGroup.y1, line.bbox.y1) - Math.max(currentGroup.y0, line.bbox.y0);
-          const lineHeight = Math.min(currentGroup.y1 - currentGroup.y0, line.bbox.y1 - line.bbox.y0);
+          const overlap = Math.min(cg.y1, line.bbox.y1) - Math.max(cg.y0, line.bbox.y0);
+          const lh = Math.min(cg.y1 - cg.y0, line.bbox.y1 - line.bbox.y0);
           
-          if (overlapY > lineHeight * 0.4) {
-            currentGroup.lines.push(line);
-            currentGroup.x0 = Math.min(currentGroup.x0, line.bbox.x0);
-            currentGroup.x1 = Math.max(currentGroup.x1, line.bbox.x1);
-            currentGroup.y0 = Math.min(currentGroup.y0, line.bbox.y0);
-            currentGroup.y1 = Math.max(currentGroup.y1, line.bbox.y1);
+          if (overlap > lh * CONFIG.LINE_OVERLAP_RATIO) {
+            cg.lines.push(line);
+            cg.x0 = Math.min(cg.x0, line.bbox.x0);
+            cg.x1 = Math.max(cg.x1, line.bbox.x1);
+            cg.y0 = Math.min(cg.y0, line.bbox.y0);
+            cg.y1 = Math.max(cg.y1, line.bbox.y1);
           } else {
-            lineGroups.push(currentGroup);
-            currentGroup = {
-              lines: [line],
-              y0: line.bbox.y0, y1: line.bbox.y1,
-              x0: line.bbox.x0, x1: line.bbox.x1
-            };
+            lineGroups.push(cg);
+            cg = { lines: [line], y0: line.bbox.y0, y1: line.bbox.y1, x0: line.bbox.x0, x1: line.bbox.x1 };
           }
         }
-      });
-      if (currentGroup) lineGroups.push(currentGroup);
+      }
+      if (cg) lineGroups.push(cg);
       
-      // X順にソートしてテキスト結合
-      lineGroups.forEach(group => {
-        group.lines.sort((a, b) => a.bbox.x0 - b.bbox.x0);
-        group.text = group.lines.map(l => l.text.trim()).join(' ');
-        group.confidence = Math.round(group.lines.reduce((sum, l) => sum + l.confidence, 0) / group.lines.length);
-      });
+      for (const g of lineGroups) {
+        g.lines.sort((a, b) => a.bbox.x0 - b.bbox.x0);
+        g.text = g.lines.map(l => l.text.trim()).join(' ');
+        g.confidence = Math.round(g.lines.reduce((s, l) => s + l.confidence, 0) / g.lines.length);
+      }
       
       // 段落グループ化
       const paragraphs = [];
-      let currentPara = null;
-      const mergeThreshold = 35;
+      let cp = null;
       
-      lineGroups.forEach(group => {
-        if (!currentPara) {
-          currentPara = {
-            lines: [group],
-            text: group.text,
-            bbox: { x0: group.x0, y0: group.y0, x1: group.x1, y1: group.y1 },
-            confidence: group.confidence
-          };
+      for (const g of lineGroups) {
+        if (!cp) {
+          cp = { lines: [g], text: g.text, bbox: { x0: g.x0, y0: g.y0, x1: g.x1, y1: g.y1 }, confidence: g.confidence };
         } else {
-          const gap = group.y0 - currentPara.bbox.y1;
-          const xOverlap = Math.min(currentPara.bbox.x1, group.x1) - Math.max(currentPara.bbox.x0, group.x0);
-          const minWidth = Math.min(currentPara.bbox.x1 - currentPara.bbox.x0, group.x1 - group.x0);
-          const xOverlapRatio = xOverlap / minWidth;
+          const gap = g.y0 - cp.bbox.y1;
+          const xOverlap = Math.min(cp.bbox.x1, g.x1) - Math.max(cp.bbox.x0, g.x0);
+          const minWidth = Math.min(cp.bbox.x1 - cp.bbox.x0, g.x1 - g.x0);
+          const ratio = minWidth > 0 ? xOverlap / minWidth : 0;
           
-          if (gap < mergeThreshold && gap > -10 && xOverlapRatio > 0.2) {
-            currentPara.lines.push(group);
-            currentPara.text += '\n' + group.text;
-            currentPara.bbox.x0 = Math.min(currentPara.bbox.x0, group.x0);
-            currentPara.bbox.x1 = Math.max(currentPara.bbox.x1, group.x1);
-            currentPara.bbox.y1 = group.y1;
-            currentPara.confidence = Math.round((currentPara.confidence + group.confidence) / 2);
+          if (gap >= -5 && gap < CONFIG.PARAGRAPH_MERGE_THRESHOLD && ratio > 0.15) {
+            cp.lines.push(g);
+            cp.text += '\n' + g.text;
+            cp.bbox.x0 = Math.min(cp.bbox.x0, g.x0);
+            cp.bbox.x1 = Math.max(cp.bbox.x1, g.x1);
+            cp.bbox.y1 = g.y1;
+            cp.confidence = Math.round((cp.confidence + g.confidence) / 2);
           } else {
-            paragraphs.push(currentPara);
-            currentPara = {
-              lines: [group],
-              text: group.text,
-              bbox: { x0: group.x0, y0: group.y0, x1: group.x1, y1: group.y1 },
-              confidence: group.confidence
-            };
+            paragraphs.push(cp);
+            cp = { lines: [g], text: g.text, bbox: { x0: g.x0, y0: g.y0, x1: g.x1, y1: g.y1 }, confidence: g.confidence };
           }
         }
-      });
-      if (currentPara) paragraphs.push(currentPara);
+      }
+      if (cp) paragraphs.push(cp);
       
-      return paragraphs.map((para, idx) => ({
-        id: idx,
-        text: para.text,
-        confidence: para.confidence,
-        bbox: para.bbox,
-        lineCount: para.lines.length,
-        fontSize: estimateFontSize(para.bbox, para.lines.length)
-      }));
-    }
-
-    function estimateFontSize(bbox, lineCount) {
-      const height = bbox.y1 - bbox.y0;
-      const lineHeight = height / lineCount;
-      // おおよそのフォントサイズ（ピクセル -> pt変換）
-      return Math.max(8, Math.min(48, Math.round(lineHeight * 0.7)));
+      const data = imageData ? imageData.data : null;
+      
+      return paragraphs.map((p, idx) => {
+        const height = p.bbox.y1 - p.bbox.y0;
+        const lc = p.lines.length;
+        const lh = height / lc;
+        const hasJp = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/.test(p.text);
+        const coeff = hasJp ? 0.6 : 0.7;
+        
+        return {
+          id: idx,
+          text: p.text,
+          confidence: p.confidence,
+          bbox: p.bbox,
+          lineCount: lc,
+          fontSize: clamp(Math.round(lh * coeff), 8, 48),
+          textColor: (state.detectTextColor && data) ? detectTextColor(data, w, h, p.bbox) : '333333'
+        };
+      });
     }
 
     // ============================================
-    // OCR
+    // OCR処理
     // ============================================
     async function performOCR(imageDataUrl, language) {
       if (!window.Tesseract) return { text: '', confidence: 0, lines: [] };
       
       try {
+        if (state.cancelRequested) throw new Error('Cancelled');
+        
         const worker = await Tesseract.createWorker(language, 1, {
           logger: m => {
-            if (m.status === 'recognizing text') {
-              el.progressDetail.textContent = `OCR: ${Math.round(m.progress * 100)}%`;
+            if (m.status === 'recognizing text' && el.progressSub) {
+              el.progressSub.textContent = `OCR: ${Math.round(m.progress * 100)}%`;
             }
           }
         });
@@ -634,147 +801,164 @@
           lines: result.data.lines || []
         };
       } catch (err) {
-        console.error('OCR Error:', err);
+        if (err.message === 'Cancelled') throw err;
+        console.warn('OCR処理でエラー:', err.message);
         return { text: '', confidence: 0, lines: [] };
       }
     }
 
     // ============================================
-    // Event Listeners
+    // 設定読み込み（共通化）
     // ============================================
-    el.uploadButton.addEventListener('click', e => { e.preventDefault(); el.fileInput.click(); });
-    
-    el.fileInput.addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (file && file.type === 'application/pdf') {
-        state.ocrLanguage = el.ocrLanguage.value;
-        state.fontFamily = el.fontFamily.value;
-        state.autoBold = el.autoBold.checked;
-        processFile(file);
-      }
-    });
-
-    el.uploadButton.addEventListener('dragover', e => { e.preventDefault(); el.uploadButton.classList.add('bg-indigo-500/10'); });
-    el.uploadButton.addEventListener('dragleave', e => { e.preventDefault(); el.uploadButton.classList.remove('bg-indigo-500/10'); });
-    el.uploadButton.addEventListener('drop', e => {
-      e.preventDefault();
-      el.uploadButton.classList.remove('bg-indigo-500/10');
-      const file = e.dataTransfer.files[0];
-      if (file && file.type === 'application/pdf') {
-        state.ocrLanguage = el.ocrLanguage.value;
-        state.fontFamily = el.fontFamily.value;
-        state.autoBold = el.autoBold.checked;
-        processFile(file);
-      }
-    });
-
-    el.cancelButton.addEventListener('click', () => { state.cancelRequested = true; });
-    el.resetBtn.addEventListener('click', reset);
-    el.retryBtn.addEventListener('click', reset);
-
-    el.downloadCleanPptxBtn.addEventListener('click', downloadCleanPptx);
-    el.downloadZipBtn.addEventListener('click', downloadZip);
-    el.downloadJsonBtn.addEventListener('click', downloadJson);
-
-    el.prevCompare.addEventListener('click', () => navigateCompare(-1));
-    el.nextCompare.addEventListener('click', () => navigateCompare(1));
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => switchTab(btn.id.replace('tab-', '')));
-    });
+    function readSettings() {
+      state.ocrLanguage = el.ocrLanguage.value;
+      state.fontFamily = el.fontFamily.value;
+      state.autoBold = el.autoBold.checked;
+      state.detectTextColor = el.detectTextColor.checked;
+      state.detectGraphics = el.detectGraphics.checked;
+      state.smoothErase = el.smoothErase.checked;
+    }
 
     // ============================================
-    // Process PDF
+    // ファイル検証
+    // ============================================
+    function validateFile(file) {
+      if (!file) return { valid: false, error: 'ファイルが選択されていません' };
+      if (file.type !== 'application/pdf') return { valid: false, error: 'PDFファイルのみ対応しています' };
+      if (file.size > CONFIG.MAX_FILE_SIZE) return { valid: false, error: ERROR_MESSAGES.FILE_TOO_LARGE };
+      return { valid: true };
+    }
+
+    // ============================================
+    // PDF処理
     // ============================================
     async function processFile(file) {
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        showError(validation.error);
+        return;
+      }
+      
       state.file = file;
       state.images = [];
       state.zipBlob = null;
       state.cancelRequested = false;
       state.currentCompareIndex = 0;
+      state.startTime = performance.now();
       
       showProcessing();
-      updateProgress(0, 0, 'PDF解析中...', '');
+      updateProgress(0, 0, 'PDF解析中...', `${formatFileSize(file.size)}`, '');
 
       try {
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        
+        let pdf;
+        try {
+          pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        } catch (e) {
+          throw new Error(ERROR_MESSAGES.INVALID_PDF);
+        }
+        
         const totalPages = pdf.numPages;
-
         const zip = new JSZip();
 
         for (let i = 1; i <= totalPages; i++) {
-          if (state.cancelRequested) { reset(); showToast('キャンセル', 'info'); return; }
+          if (state.cancelRequested) { reset(); showToast('キャンセルしました', 'info'); return; }
 
-          updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'レンダリング中...');
+          updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'レンダリング...', '');
 
           const page = await pdf.getPage(i);
-          const scale = 2.0;
-          const viewport = page.getViewport({ scale });
+          const viewport = page.getViewport({ scale: CONFIG.CANVAS_SCALE });
+          const w = viewport.width, h = viewport.height;
 
-          // 元画像用Canvas
           const originalCanvas = document.createElement('canvas');
-          originalCanvas.width = viewport.width;
-          originalCanvas.height = viewport.height;
-          const originalCtx = originalCanvas.getContext('2d');
-          await page.render({ canvasContext: originalCtx, viewport }).promise;
+          originalCanvas.width = w; originalCanvas.height = h;
+          const ctx = originalCanvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport }).promise;
           const originalDataUrl = originalCanvas.toDataURL('image/png');
+          
+          const imageData = ctx.getImageData(0, 0, w, h);
+          const data = imageData.data;
+          
+          // 共有計算
+          const gray = toGrayscale(data, w * h);
+          const edges = detectEdges(gray, w, h);
 
           // OCR
-          updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'OCR処理中...');
+          updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'OCR処理...', '');
           const ocrResult = await performOCR(originalDataUrl, state.ocrLanguage);
+          
+          if (state.cancelRequested) { reset(); showToast('キャンセルしました', 'info'); return; }
+          
+          const blocks = mergeTextLines(ocrResult.lines, w, h, imageData);
 
-          // テキストマージ
-          updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'テキストマージ中...');
-          const blocks = smartMergeLines(ocrResult.lines, viewport.width, viewport.height);
+          // 図形検出
+          let graphics = [];
+          if (state.detectGraphics) {
+            updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, '図形検出...', '');
+            graphics = detectGraphics(data, gray, edges, w, h, blocks);
+          }
 
-          // テキスト消去用Canvas（コピー）
-          updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'テキスト消去中...');
+          // テキスト消去
+          updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'テキスト消去...', '');
           const erasedCanvas = document.createElement('canvas');
-          erasedCanvas.width = viewport.width;
-          erasedCanvas.height = viewport.height;
+          erasedCanvas.width = w; erasedCanvas.height = h;
           const erasedCtx = erasedCanvas.getContext('2d');
           erasedCtx.drawImage(originalCanvas, 0, 0);
           
-          // テキスト領域を消去
-          eraseTextFromCanvas(erasedCanvas, blocks, state.eraseMargin);
+          const erasedImageData = erasedCtx.getImageData(0, 0, w, h);
+          eraseText(erasedImageData.data, edges, w, h, blocks, graphics, state.eraseMargin, state.shapeProtection, state.smoothErase);
+          erasedCtx.putImageData(erasedImageData, 0, 0);
+          
           const erasedDataUrl = erasedCanvas.toDataURL('image/png');
-          const erasedBlob = await new Promise(resolve => erasedCanvas.toBlob(resolve, 'image/png'));
+          const erasedBlob = await new Promise(r => erasedCanvas.toBlob(r, 'image/png'));
+
+          // 図形切り出し
+          const graphicImages = [];
+          for (const g of graphics) {
+            if (g.isPhoto || g.width < CONFIG.MIN_GRAPHIC_SIZE || g.height < CONFIG.MIN_GRAPHIC_SIZE) continue;
+            const gc = document.createElement('canvas');
+            gc.width = g.width; gc.height = g.height;
+            gc.getContext('2d').drawImage(originalCanvas, g.x, g.y, g.width, g.height, 0, 0, g.width, g.height);
+            graphicImages.push({ ...g, dataUrl: gc.toDataURL('image/png') });
+            gc.width = 0; gc.height = 0;
+          }
 
           state.images.push({
-            id: i,
-            originalDataUrl,
-            erasedDataUrl,
-            erasedBlob,
-            width: viewport.width,
-            height: viewport.height,
-            blocks,
-            text: ocrResult.text
+            id: i, originalDataUrl, erasedDataUrl, erasedBlob,
+            width: w, height: h, blocks, graphics: graphicImages, text: ocrResult.text
           });
 
           zip.file(`slide_${String(i).padStart(2, '0')}_clean.png`, erasedBlob);
 
           // メモリ解放
-          originalCanvas.width = 0;
-          erasedCanvas.width = 0;
-          await new Promise(r => setTimeout(r, 20));
+          originalCanvas.width = 0; originalCanvas.height = 0;
+          erasedCanvas.width = 0; erasedCanvas.height = 0;
+          
+          await new Promise(r => setTimeout(r, 10));
         }
 
-        if (state.cancelRequested) { reset(); showToast('キャンセル', 'info'); return; }
+        if (state.cancelRequested) { reset(); showToast('キャンセルしました', 'info'); return; }
 
-        updateProgress(totalPages, totalPages, 'ZIP作成中...', '');
+        updateProgress(totalPages, totalPages, 'ZIP作成...', '', '');
         state.zipBlob = await zip.generateAsync({ type: 'blob' });
 
-        showEditor();
-        showToast(`${totalPages}枚の処理完了`, 'success');
+        const elapsed = performance.now() - state.startTime;
+        showEditor(elapsed);
+        showToast(`${totalPages}枚処理完了（${formatTime(elapsed)}）`, 'success');
       } catch (err) {
-        console.error('Error:', err);
-        showError('PDFの処理中にエラーが発生しました');
+        if (err.message === 'Cancelled') {
+          reset();
+          showToast('キャンセルしました', 'info');
+        } else {
+          console.warn('処理エラー:', err);
+          showError(err.message || ERROR_MESSAGES.UNKNOWN);
+        }
       }
     }
 
     // ============================================
-    // UI Functions
+    // UI関数
     // ============================================
     function showProcessing() {
       el.uploadArea.classList.add('hidden');
@@ -785,7 +969,7 @@
       el.headerContent.classList.add('hidden');
     }
 
-    function showEditor() {
+    function showEditor(ms) {
       el.uploadArea.classList.add('hidden');
       el.processingArea.classList.add('hidden');
       el.processingArea.style.display = 'none';
@@ -794,24 +978,23 @@
       el.headerContent.classList.add('hidden');
 
       el.fileName.textContent = state.file.name;
-      el.slideCount.textContent = `${state.images.length} スライド`;
-
-      const totalBlocks = state.images.reduce((sum, img) => sum + (img.blocks?.length || 0), 0);
-      const totalChars = state.images.reduce((sum, img) => sum + (img.text?.length || 0), 0);
-      el.statBlocks.textContent = totalBlocks;
-      el.statChars.textContent = totalChars.toLocaleString();
+      el.slideCount.textContent = `${state.images.length}枚`;
+      el.statBlocks.textContent = state.images.reduce((s, i) => s + (i.blocks?.length || 0), 0);
+      el.statGraphics.textContent = state.images.reduce((s, i) => s + (i.graphics?.length || 0), 0);
+      if (ms) el.processingTime.textContent = `(${formatTime(ms)})`;
 
       updateCompareView();
       renderBlockSlideList();
+      renderGraphicsSlideList();
     }
 
-    function showError(message) {
+    function showError(msg) {
       el.uploadArea.classList.add('hidden');
       el.processingArea.classList.add('hidden');
       el.editorArea.classList.add('hidden');
       el.errorArea.classList.remove('hidden');
       el.headerContent.classList.remove('hidden');
-      el.errorMessage.textContent = message;
+      el.errorMessage.textContent = msg;
     }
 
     function reset() {
@@ -820,55 +1003,52 @@
       state.zipBlob = null;
       state.cancelRequested = false;
       state.currentCompareIndex = 0;
+      state.selectedSlideIndex = null;
+      state.selectedGraphicsSlideIndex = null;
       el.fileInput.value = '';
 
       el.uploadArea.classList.remove('hidden');
       el.processingArea.classList.add('hidden');
+      el.processingArea.style.display = 'none';
       el.editorArea.classList.add('hidden');
       el.errorArea.classList.add('hidden');
       el.headerContent.classList.remove('hidden');
-      
       switchTab('compare');
     }
 
-    function updateProgress(current, total, message, detail) {
-      const percent = total > 0 ? Math.round((current / total) * 100) : 0;
-      el.progressCircle.setAttribute('stroke-dasharray', `${289 * percent / 100} 289`);
-      el.progressPercent.textContent = `${percent}%`;
-      el.progressMessage.textContent = message;
+    function updateProgress(cur, tot, msg, detail, sub) {
+      const pct = tot > 0 ? Math.round((cur / tot) * 100) : 0;
+      el.progressCircle.setAttribute('stroke-dasharray', `${CONFIG.PROGRESS_CIRCUMFERENCE * pct / 100} ${CONFIG.PROGRESS_CIRCUMFERENCE}`);
+      el.progressPercent.textContent = `${pct}%`;
+      el.progressMessage.textContent = msg;
       el.progressDetail.textContent = detail;
+      el.progressSub.textContent = sub || '';
     }
 
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('tab-active');
-        btn.classList.add('text-slate-400');
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        const active = b.id === `tab-${name}`;
+        b.classList.toggle('tab-active', active);
+        b.classList.toggle('text-slate-400', !active);
+        b.setAttribute('aria-selected', active);
       });
       document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-
-      const tab = document.getElementById(`tab-${tabName}`);
-      const content = document.getElementById(`tab-content-${tabName}`);
-      if (tab && content) {
-        tab.classList.add('tab-active');
-        tab.classList.remove('text-slate-400');
-        content.classList.remove('hidden');
-      }
+      const content = document.getElementById(`tab-content-${name}`);
+      if (content) content.classList.remove('hidden');
     }
 
     function updateCompareView() {
       if (state.images.length === 0) return;
-      
       const img = state.images[state.currentCompareIndex];
       el.compareIndex.textContent = `${state.currentCompareIndex + 1}/${state.images.length}`;
-      
-      el.originalPreview.innerHTML = `<img src="${img.originalDataUrl}" class="w-full h-auto">`;
-      el.erasedPreview.innerHTML = `<img src="${img.erasedDataUrl}" class="w-full h-auto">`;
+      el.originalPreview.innerHTML = `<img src="${img.originalDataUrl}" class="w-full h-auto" alt="元画像 スライド${state.currentCompareIndex + 1}" loading="lazy">`;
+      el.erasedPreview.innerHTML = `<img src="${img.erasedDataUrl}" class="w-full h-auto" alt="消去後 スライド${state.currentCompareIndex + 1}" loading="lazy">`;
     }
 
     function navigateCompare(dir) {
-      const newIdx = state.currentCompareIndex + dir;
-      if (newIdx >= 0 && newIdx < state.images.length) {
-        state.currentCompareIndex = newIdx;
+      const idx = state.currentCompareIndex + dir;
+      if (idx >= 0 && idx < state.images.length) {
+        state.currentCompareIndex = idx;
         updateCompareView();
       }
     }
@@ -877,66 +1057,96 @@
       el.blockSlideList.innerHTML = '';
       state.images.forEach((img, idx) => {
         const btn = document.createElement('button');
-        btn.className = `w-full p-2.5 rounded-lg text-left text-sm transition-all ${state.selectedSlideIndex === idx ? 'bg-cyan-600 text-white' : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700'}`;
-        btn.innerHTML = `<div class="flex justify-between"><span>スライド ${idx + 1}</span><span class="text-xs opacity-70">${img.blocks?.length || 0}B</span></div>`;
-        btn.addEventListener('click', () => selectSlide(idx));
+        btn.className = `w-full p-2 rounded-lg text-left text-xs transition-all ${state.selectedSlideIndex === idx ? 'bg-cyan-600 text-white' : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700'}`;
+        btn.innerHTML = `<div class="flex justify-between"><span>スライド ${idx+1}</span><span class="opacity-70">${img.blocks?.length||0}B</span></div>`;
+        btn.setAttribute('role', 'option');
+        btn.setAttribute('aria-selected', state.selectedSlideIndex === idx);
+        btn.onclick = () => selectBlockSlide(idx);
         el.blockSlideList.appendChild(btn);
       });
     }
 
-    function selectSlide(idx) {
+    function selectBlockSlide(idx) {
       state.selectedSlideIndex = idx;
       const img = state.images[idx];
-      
-      el.blockCount.textContent = `(${img.blocks?.length || 0})`;
+      el.blockCount.textContent = `(${img.blocks?.length||0})`;
       
       if (img.blocks && img.blocks.length > 0) {
         el.blockList.innerHTML = img.blocks.map((b, i) => `
-          <div class="p-3 bg-slate-800/50 rounded-lg border-l-2 border-cyan-500">
+          <div class="p-2 bg-slate-800/50 rounded-lg border-l-2 border-cyan-500" role="listitem">
             <div class="flex justify-between mb-1">
-              <span class="text-xs font-bold text-cyan-300">B${i + 1}</span>
+              <span class="text-xs font-bold text-cyan-300">B${i+1}</span>
               <span class="text-xs text-slate-500">${b.confidence}% / ${b.fontSize}pt</span>
             </div>
-            <p class="text-sm text-slate-200 whitespace-pre-wrap">${b.text}</p>
+            <p class="text-xs text-slate-200 whitespace-pre-wrap">${escapeHtml(b.text)}</p>
+            ${state.detectTextColor ? `<span class="inline-block w-3 h-3 rounded mt-1" style="background:#${b.textColor}" aria-label="テキスト色"></span>` : ''}
           </div>
         `).join('');
       } else {
-        el.blockList.innerHTML = '<p class="text-slate-500 text-sm">ブロックなし</p>';
+        el.blockList.innerHTML = '<p class="text-slate-500 text-xs">ブロックなし</p>';
       }
-      
       renderBlockSlideList();
     }
 
-    function showToast(message, type = 'success') {
-      el.toastMessage.textContent = message;
-      const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info';
-      const iconColor = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-blue-400';
-      el.toastIcon.setAttribute('data-lucide', iconName);
-      el.toastIcon.className = `w-4 h-4 ${iconColor}`;
+    function renderGraphicsSlideList() {
+      el.graphicsSlideList.innerHTML = '';
+      state.images.forEach((img, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `w-full p-2 rounded-lg text-left text-xs transition-all ${state.selectedGraphicsSlideIndex === idx ? 'bg-cyan-600 text-white' : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700'}`;
+        btn.innerHTML = `<div class="flex justify-between"><span>スライド ${idx+1}</span><span class="opacity-70">${img.graphics?.length||0}G</span></div>`;
+        btn.setAttribute('role', 'option');
+        btn.onclick = () => selectGraphicsSlide(idx);
+        el.graphicsSlideList.appendChild(btn);
+      });
+    }
+
+    function selectGraphicsSlide(idx) {
+      state.selectedGraphicsSlideIndex = idx;
+      const img = state.images[idx];
+      el.graphicsCount.textContent = `(${img.graphics?.length||0})`;
+      
+      if (img.graphics && img.graphics.length > 0) {
+        el.graphicsList.innerHTML = img.graphics.map((g, i) => `
+          <div class="bg-slate-800/50 rounded-lg overflow-hidden" role="listitem">
+            <img src="${g.dataUrl}" class="w-full h-auto" alt="図形${i+1} (${g.type})" loading="lazy">
+            <div class="p-1.5 text-xs text-slate-400">${g.width}×${g.height}px / ${g.type}</div>
+          </div>
+        `).join('');
+      } else {
+        el.graphicsList.innerHTML = '<p class="text-slate-500 text-xs col-span-full">図形なし</p>';
+      }
+      renderGraphicsSlideList();
+    }
+
+    function showToast(msg, type = 'success') {
+      el.toastMessage.textContent = msg;
+      const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info';
+      const color = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-blue-400';
+      el.toastIcon.setAttribute('data-lucide', icon);
+      el.toastIcon.className = `w-4 h-4 ${color}`;
       lucide.createIcons();
       el.toast.classList.remove('hidden');
-      setTimeout(() => el.toast.classList.add('hidden'), 2500);
+      setTimeout(() => el.toast.classList.add('hidden'), 3000);
     }
 
     // ============================================
-    // Download Functions
+    // ダウンロード機能
     // ============================================
-    function downloadFile(blob, filename) {
+    function downloadFile(blob, name) {
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
 
-    function setButtonsDisabled(disabled) {
-      state.isExporting = disabled;
-      el.downloadCleanPptxBtn.disabled = disabled;
-      el.downloadZipBtn.disabled = disabled;
-      el.downloadJsonBtn.disabled = disabled;
+    function setButtonsDisabled(d) {
+      state.isExporting = d;
+      el.downloadCleanPptxBtn.disabled = d;
+      el.downloadZipBtn.disabled = d;
+      el.downloadJsonBtn.disabled = d;
     }
 
     async function downloadCleanPptx() {
@@ -947,63 +1157,44 @@
         showToast('PPTX作成中...', 'info');
 
         const pptx = new PptxGenJS();
-        const slideWidth = 10;
-        const slideHeight = 5.625;
-        pptx.defineLayout({ name: 'CUSTOM', width: slideWidth, height: slideHeight });
+        const sw = 10, sh = 5.625;
+        pptx.defineLayout({ name: 'CUSTOM', width: sw, height: sh });
         pptx.layout = 'CUSTOM';
 
         for (const img of state.images) {
           const slide = pptx.addSlide();
+          slide.addImage({ data: img.erasedDataUrl, x: 0, y: 0, w: sw, h: sh });
           
-          // テキスト消去済み背景
-          slide.addImage({
-            data: img.erasedDataUrl,
-            x: 0, y: 0,
-            w: slideWidth, h: slideHeight
-          });
-          
-          // テキストブロックを配置
-          if (img.blocks && img.blocks.length > 0) {
-            img.blocks.forEach(block => {
-              if (!block.bbox || !block.text) return;
+          if (img.blocks) {
+            for (const b of img.blocks) {
+              if (!b.bbox || !b.text) continue;
               
-              const x = (block.bbox.x0 / img.width) * slideWidth;
-              const y = (block.bbox.y0 / img.height) * slideHeight;
-              const w = ((block.bbox.x1 - block.bbox.x0) / img.width) * slideWidth;
-              const h = ((block.bbox.y1 - block.bbox.y0) / img.height) * slideHeight;
+              const x = (b.bbox.x0 / img.width) * sw;
+              const y = (b.bbox.y0 / img.height) * sh;
+              const w = ((b.bbox.x1 - b.bbox.x0) / img.width) * sw;
+              const h = ((b.bbox.y1 - b.bbox.y0) / img.height) * sh;
               
-              // フォントサイズをPPTX用に調整（px -> pt）
-              const fontSize = Math.max(8, Math.min(36, Math.round(block.fontSize * 0.6)));
-              const isBold = state.autoBold && fontSize > 14;
+              const fs = clamp(Math.round(b.fontSize * 0.55), 8, 32);
               
-              slide.addText(block.text, {
-                x: Math.max(0, x - 0.02),
-                y: Math.max(0, y - 0.01),
-                w: Math.max(w + 0.04, 0.5),
-                h: Math.max(h + 0.02, 0.2),
-                fontSize: fontSize,
-                fontFace: state.fontFamily,
-                color: '333333',
-                bold: isBold,
-                valign: 'top',
-                wrap: true
+              slide.addText(b.text, {
+                x: Math.max(0, x - 0.01), y: Math.max(0, y),
+                w: Math.max(w + 0.02, 0.4), h: Math.max(h, 0.2),
+                fontSize: fs, fontFace: state.fontFamily,
+                color: b.textColor || '333333',
+                bold: state.autoBold && fs > 12,
+                valign: 'top', wrap: true
               });
-            });
+            }
           }
           
-          // ノートに全テキスト
-          if (img.text) {
-            slide.addNotes(img.text);
-          }
+          if (img.text) slide.addNotes(img.text);
         }
 
-        const filename = state.file.name.replace('.pdf', '') + '_clean.pptx';
-        await pptx.writeFile({ fileName: filename });
-        
+        await pptx.writeFile({ fileName: state.file.name.replace('.pdf', '') + '_clean.pptx' });
         showToast('クリーンPPTX完成！', 'success');
       } catch (err) {
-        console.error('PPTX error:', err);
-        showToast('PPTX作成失敗', 'error');
+        console.warn('PPTX作成エラー:', err);
+        showToast(ERROR_MESSAGES.PPTX_FAILED, 'error');
       } finally {
         setButtonsDisabled(false);
       }
@@ -1011,7 +1202,7 @@
 
     function downloadZip() {
       if (state.zipBlob && state.file) {
-        downloadFile(state.zipBlob, state.file.name.replace('.pdf', '') + '_clean_images.zip');
+        downloadFile(state.zipBlob, state.file.name.replace('.pdf', '') + '_clean.zip');
         showToast('ZIPダウンロード完了', 'success');
       }
     }
@@ -1022,21 +1213,104 @@
       const data = {
         filename: state.file.name,
         processedAt: new Date().toISOString(),
-        settings: {
-          eraseMargin: state.eraseMargin,
-          minConfidence: state.minConfidence,
-          fontFamily: state.fontFamily
-        },
+        version: 'v7.1',
+        settings: { eraseMargin: state.eraseMargin, minConfidence: state.minConfidence, shapeProtection: state.shapeProtection, fontFamily: state.fontFamily },
         slides: state.images.map((img, idx) => ({
-          slideNumber: idx + 1,
-          width: img.width,
-          height: img.height,
-          blocks: img.blocks || []
+          slideNumber: idx + 1, width: img.width, height: img.height,
+          blocks: img.blocks || [],
+          graphics: (img.graphics || []).map(g => ({ type: g.type, x: g.x, y: g.y, width: g.width, height: g.height, colorHex: g.colorHex }))
         }))
       };
 
       downloadFile(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), state.file.name.replace('.pdf', '') + '_data.json');
       showToast('JSONダウンロード完了', 'success');
+    }
+
+    // ============================================
+    // イベント設定
+    // ============================================
+    function setupEvents() {
+      // スライダー
+      el.eraseMargin.addEventListener('input', e => { state.eraseMargin = +e.target.value; el.eraseMarginValue.textContent = `${state.eraseMargin}px`; });
+      el.minConfidence.addEventListener('input', e => { state.minConfidence = +e.target.value; el.minConfidenceValue.textContent = `${state.minConfidence}%`; });
+      el.shapeProtection.addEventListener('input', e => { state.shapeProtection = +e.target.value; el.shapeProtectionValue.textContent = `${state.shapeProtection}%`; });
+      
+      // ファイル選択
+      el.uploadButton.addEventListener('click', e => { e.preventDefault(); el.fileInput.click(); });
+      
+      el.fileInput.addEventListener('change', e => {
+        const f = e.target.files[0];
+        if (f) { readSettings(); processFile(f); }
+      });
+      
+      // ドラッグ&ドロップ
+      el.uploadButton.addEventListener('dragover', e => { e.preventDefault(); el.uploadButton.classList.add('bg-indigo-500/10'); });
+      el.uploadButton.addEventListener('dragleave', e => { e.preventDefault(); el.uploadButton.classList.remove('bg-indigo-500/10'); });
+      el.uploadButton.addEventListener('drop', e => {
+        e.preventDefault();
+        el.uploadButton.classList.remove('bg-indigo-500/10');
+        const f = e.dataTransfer.files[0];
+        if (f) { readSettings(); processFile(f); }
+      });
+      
+      // ボタン
+      el.cancelButton.addEventListener('click', () => { state.cancelRequested = true; });
+      el.resetBtn.addEventListener('click', reset);
+      el.retryBtn.addEventListener('click', reset);
+      el.downloadCleanPptxBtn.addEventListener('click', downloadCleanPptx);
+      el.downloadZipBtn.addEventListener('click', downloadZip);
+      el.downloadJsonBtn.addEventListener('click', downloadJson);
+      
+      // ナビゲーション
+      el.prevCompare.addEventListener('click', () => navigateCompare(-1));
+      el.nextCompare.addEventListener('click', () => navigateCompare(1));
+      
+      // キーボード
+      document.addEventListener('keydown', e => {
+        if (el.editorArea.classList.contains('hidden')) return;
+        if (e.key === 'ArrowLeft') navigateCompare(-1);
+        if (e.key === 'ArrowRight') navigateCompare(1);
+      });
+      
+      // タブ
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.addEventListener('click', () => switchTab(b.id.replace('tab-', '')));
+      });
+    }
+
+    // ============================================
+    // 初期化
+    // ============================================
+    function init() {
+      // DOM要素キャッシュ
+      const ids = ['file-input','upload-area','upload-button','processing-area','editor-area','error-area','init-status','header-content','progress-circle','progress-percent','progress-message','progress-detail','progress-sub','cancel-button','file-name','slide-count','stat-blocks','stat-graphics','processing-time','download-clean-pptx-btn','download-zip-btn','download-json-btn','reset-btn','retry-btn','error-message','toast','toast-icon','toast-message','ocr-language','erase-margin','erase-margin-value','min-confidence','min-confidence-value','shape-protection','shape-protection-value','font-family','auto-bold','detect-text-color','detect-graphics','smooth-erase','tab-compare','tab-blocks','tab-graphics','tab-content-compare','tab-content-blocks','tab-content-graphics','original-preview','erased-preview','compare-index','prev-compare','next-compare','block-slide-list','block-list','block-count','graphics-slide-list','graphics-list','graphics-count'];
+      ids.forEach(id => { el[id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = document.getElementById(id); });
+      
+      setupEvents();
+      lucide.createIcons();
+      
+      // 準備完了表示
+      if (window.Tesseract) {
+        el.initStatus.innerHTML = '<i data-lucide="check-circle" class="w-3 h-3 text-green-400" aria-hidden="true"></i><span>準備完了</span>';
+        lucide.createIcons();
+        setTimeout(() => el.initStatus.classList.add('hidden'), 1500);
+      }
+    }
+
+    // DOM準備後に初期化（Lucide読み込み待機）
+    function safeInit() {
+      if (typeof lucide !== 'undefined') {
+        init();
+      } else {
+        // Lucideがまだ読み込まれていない場合は待機
+        setTimeout(safeInit, 100);
+      }
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', safeInit);
+    } else {
+      safeInit();
     }
   </script>
 
