@@ -5,15 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>PDF Slide Studio Pro v3 - 高精度テキスト抽出</title>
-  <meta name="description" content="PDFスライドを高精度に編集可能なPowerPointに変換。スマートテキストマージ搭載。">
-
-  <meta property="og:title" content="PDF Slide Studio Pro v3">
-  <meta property="og:description" content="PDFを編集可能なPowerPointに変換。高精度テキスト抽出。">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://toshiki-yasuda.github.io/pdf-slide-studio/">
-  <meta name="twitter:card" content="summary">
+  <title>PDF Slide Studio Pro v4 - テキスト消去＆再配置</title>
+  <meta name="description" content="PDFのテキストを消去し、編集可能なテキストボックスで再配置。実用レベルのPPTX出力。">
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
 
@@ -31,7 +24,7 @@
 
   <style>
     * { -webkit-tap-highlight-color: transparent; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     
     @keyframes aurora-1 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(20px, -20px) scale(1.1); } }
     @keyframes aurora-2 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-20px, 10px) scale(1.2); } }
@@ -42,329 +35,273 @@
     .animate-spin { animation: spin 1s linear infinite; }
     
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    .animate-pulse { animation: pulse 2s ease-in-out infinite; }
     
-    @media (hover: none) and (pointer: coarse) {
-      .touch-feedback:active { transform: scale(0.98); opacity: 0.9; }
-    }
+    .touch-feedback:active { transform: scale(0.98); opacity: 0.9; }
     
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
     
     .progress-ring { transform: rotate(-90deg); }
-    .progress-ring__circle { transition: stroke-dasharray 0.3s ease; }
     
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     
     .tab-active { background: rgba(6, 182, 212, 0.2); border-color: rgb(6, 182, 212); color: rgb(6, 182, 212); }
     
-    .text-block-overlay { position: absolute; border: 2px solid; pointer-events: none; opacity: 0.8; }
-    .shape-overlay { position: absolute; border: 2px solid; pointer-events: none; opacity: 0.6; }
+    .text-block-overlay { position: absolute; border: 2px solid; pointer-events: none; }
   </style>
 
 </head>
 <body class="bg-slate-950 text-slate-200 min-h-screen">
 
-  <div class="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+  <div class="fixed inset-0 pointer-events-none overflow-hidden">
     <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/20 rounded-full blur-[100px] animate-aurora-1"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/20 rounded-full blur-[100px] animate-aurora-2"></div>
   </div>
 
   <div id="app" class="relative z-10 min-h-screen p-4 md:p-6">
-    <div class="w-full max-w-7xl mx-auto space-y-6 md:space-y-8">
+    <div class="w-full max-w-7xl mx-auto space-y-6">
 
 ```
   <!-- Header -->
-  <header class="text-center space-y-4 pt-2 md:pt-4">
-    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+  <header class="text-center space-y-3 pt-2">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
       <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-300"></i>
-      <span class="text-[10px] md:text-[11px] uppercase tracking-[0.15em] font-bold text-cyan-300/90">PDF Slide Studio Pro v3</span>
+      <span class="text-[10px] uppercase tracking-widest font-bold text-cyan-300">PDF Slide Studio Pro v4</span>
     </div>
     
     <div id="header-content">
-      <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight text-white leading-tight px-2">
-        高精度テキスト抽出
-      </h1>
-      <p class="text-slate-400 text-sm md:text-base max-w-2xl mx-auto font-light px-4 mt-3">
-        スマートマージで論理的な段落を検出。実用レベルの編集可能PPTX。
+      <h1 class="text-2xl md:text-4xl font-extrabold text-white">テキスト消去＆再配置</h1>
+      <p class="text-slate-400 text-sm max-w-xl mx-auto mt-2">
+        元画像からテキストを消去し、編集可能なテキストボックスで再配置。実用レベルのPPTX。
       </p>
     </div>
   </header>
 
-  <main id="main-content" role="main">
+  <main id="main-content">
     
     <!-- Upload Area -->
-    <div id="upload-area" class="bg-white/5 backdrop-blur-2xl rounded-2xl md:rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] border border-white/10 overflow-hidden">
+    <div id="upload-area" class="bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10 overflow-hidden">
       <input type="file" id="file-input" class="hidden" accept="application/pdf,.pdf">
       
-      <button type="button" id="upload-button" class="relative w-full p-8 md:p-14 text-center cursor-pointer group transition-all duration-300 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 touch-feedback">
-        <div class="flex flex-col items-center gap-4 md:gap-5">
-          <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center bg-slate-800/50 text-cyan-300 group-hover:bg-slate-800/80 transition-all">
+      <button type="button" id="upload-button" class="w-full p-8 md:p-12 text-center cursor-pointer group hover:bg-white/5 transition-all touch-feedback">
+        <div class="flex flex-col items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-800/50 text-cyan-300">
             <i data-lucide="file-text" class="w-8 h-8"></i>
           </div>
-          <div class="space-y-2">
-            <p class="text-xl md:text-2xl font-bold text-slate-200 group-hover:text-white transition-colors">PDFファイルを選択</p>
-            <p class="text-xs md:text-sm text-slate-500">タップして選択 または ドラッグ&ドロップ</p>
+          <div>
+            <p class="text-xl font-bold text-slate-200">PDFファイルを選択</p>
+            <p class="text-xs text-slate-500 mt-1">タップまたはドラッグ&ドロップ</p>
           </div>
           
           <!-- Settings -->
-          <div class="w-full max-w-lg mt-4 space-y-4">
+          <div class="w-full max-w-md mt-4 space-y-3">
             
-            <!-- OCR Settings -->
-            <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-              <h4 class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
-                <i data-lucide="scan-text" class="w-4 h-4"></i>
-                OCR設定
+            <!-- OCR -->
+            <div class="p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
+              <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2">
+                <i data-lucide="scan-text" class="w-3.5 h-3.5"></i>OCR設定
               </h4>
-              <div class="space-y-3">
-                <div class="flex flex-wrap gap-3 justify-center">
-                  <label class="flex items-center gap-2 px-3 py-2 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800/80 transition-all">
-                    <input type="checkbox" id="ocr-enabled" checked class="w-4 h-4 rounded text-cyan-500">
-                    <span class="text-xs text-slate-300">OCRテキスト抽出</span>
-                  </label>
-                  <label class="flex items-center gap-2 px-3 py-2 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800/80 transition-all">
-                    <input type="checkbox" id="shape-detection-enabled" class="w-4 h-4 rounded text-cyan-500">
-                    <span class="text-xs text-slate-300">図形検出</span>
-                  </label>
-                </div>
-                <div class="flex items-center justify-center gap-2">
-                  <span class="text-xs text-slate-500">言語:</span>
-                  <select id="ocr-language" class="bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500">
-                    <option value="jpn+eng">日本語+英語</option>
-                    <option value="jpn">日本語のみ</option>
-                    <option value="eng">英語のみ</option>
-                  </select>
-                </div>
+              <div class="flex flex-wrap gap-2 justify-center">
+                <select id="ocr-language" class="bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300">
+                  <option value="jpn+eng">日本語+英語</option>
+                  <option value="jpn">日本語のみ</option>
+                  <option value="eng">英語のみ</option>
+                </select>
               </div>
             </div>
             
-            <!-- Merge Settings -->
-            <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-              <h4 class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
-                <i data-lucide="merge" class="w-4 h-4"></i>
-                テキストマージ設定
+            <!-- Text Erase Settings -->
+            <div class="p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
+              <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2">
+                <i data-lucide="eraser" class="w-3.5 h-3.5"></i>テキスト消去設定
               </h4>
-              <div class="space-y-3">
+              <div class="space-y-2">
                 <label class="flex items-center justify-between">
-                  <span class="text-xs text-slate-400">最小信頼度（%）</span>
+                  <span class="text-xs text-slate-400">消去マージン（px）</span>
                   <div class="flex items-center gap-2">
-                    <input type="range" id="min-confidence" min="0" max="90" value="50" class="w-20 h-2">
+                    <input type="range" id="erase-margin" min="0" max="20" value="5" class="w-16 h-2">
+                    <span id="erase-margin-value" class="text-xs text-slate-300 w-6">5px</span>
+                  </div>
+                </label>
+                <label class="flex items-center justify-between">
+                  <span class="text-xs text-slate-400">最小信頼度</span>
+                  <div class="flex items-center gap-2">
+                    <input type="range" id="min-confidence" min="30" max="90" value="50" class="w-16 h-2">
                     <span id="min-confidence-value" class="text-xs text-slate-300 w-8">50%</span>
                   </div>
                 </label>
-                <label class="flex items-center justify-between">
-                  <span class="text-xs text-slate-400">行間マージ閾値（px）</span>
-                  <div class="flex items-center gap-2">
-                    <input type="range" id="line-merge-threshold" min="10" max="100" value="40" class="w-20 h-2">
-                    <span id="line-merge-threshold-value" class="text-xs text-slate-300 w-8">40px</span>
-                  </div>
-                </label>
-                <label class="flex items-center justify-between">
-                  <span class="text-xs text-slate-400">最小テキスト長</span>
-                  <div class="flex items-center gap-2">
-                    <input type="range" id="min-text-length" min="1" max="10" value="3" class="w-20 h-2">
-                    <span id="min-text-length-value" class="text-xs text-slate-300 w-8">3文字</span>
-                  </div>
-                </label>
               </div>
             </div>
             
-            <!-- PPTX Settings -->
-            <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-              <h4 class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
-                <i data-lucide="presentation" class="w-4 h-4"></i>
-                PPTX出力設定
+            <!-- Font Settings -->
+            <div class="p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
+              <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2">
+                <i data-lucide="type" class="w-3.5 h-3.5"></i>フォント設定
               </h4>
-              <div class="space-y-3">
+              <div class="space-y-2">
                 <label class="flex items-center justify-between">
-                  <span class="text-xs text-slate-400">背景透明度</span>
-                  <div class="flex items-center gap-2">
-                    <input type="range" id="bg-opacity" min="0" max="100" value="20" class="w-20 h-2">
-                    <span id="bg-opacity-value" class="text-xs text-slate-300 w-8">20%</span>
-                  </div>
+                  <span class="text-xs text-slate-400">フォント</span>
+                  <select id="font-family" class="bg-slate-800/50 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300">
+                    <option value="Meiryo">メイリオ</option>
+                    <option value="Yu Gothic">游ゴシック</option>
+                    <option value="MS PGothic">MS Pゴシック</option>
+                    <option value="Hiragino Sans">ヒラギノ角ゴ</option>
+                    <option value="Arial">Arial</option>
+                  </select>
                 </label>
-                <div class="flex flex-wrap gap-3 justify-center">
-                  <label class="flex items-center gap-2">
-                    <input type="checkbox" id="include-bg-image" checked class="w-4 h-4 rounded text-cyan-500">
-                    <span class="text-xs text-slate-400">背景画像</span>
-                  </label>
-                  <label class="flex items-center gap-2">
-                    <input type="checkbox" id="include-shapes" checked class="w-4 h-4 rounded text-cyan-500">
-                    <span class="text-xs text-slate-400">図形を含める</span>
-                  </label>
-                </div>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" id="auto-bold" checked class="w-3.5 h-3.5 rounded text-cyan-500">
+                  <span class="text-xs text-slate-400">大きい文字を太字に</span>
+                </label>
               </div>
             </div>
           </div>
           
-          <div class="mt-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-medium text-sm transition-all shadow-lg shadow-cyan-600/30 flex items-center gap-2">
+          <div class="mt-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-medium text-sm transition-all shadow-lg flex items-center gap-2">
             <i data-lucide="folder-open" class="w-5 h-5"></i>
             ファイルを選択
           </div>
           
-          <div id="init-status" class="inline-flex items-center gap-2 px-4 py-2 bg-black/20 border border-white/5 text-slate-400 text-xs font-medium rounded-full mt-2 backdrop-blur-sm">
+          <div id="init-status" class="inline-flex items-center gap-2 px-3 py-1.5 bg-black/20 text-slate-400 text-xs rounded-full mt-2">
             <i data-lucide="loader-2" class="w-3 h-3 animate-spin text-cyan-400"></i>
-            <span>OCRエンジン初期化中...</span>
+            <span>OCRエンジン準備中...</span>
           </div>
         </div>
       </button>
     </div>
 
-    <!-- Processing View -->
-    <div id="processing-area" class="hidden bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10 overflow-hidden p-12 flex-col items-center justify-center min-h-[400px]" role="status" aria-live="polite">
-      <div class="relative w-32 h-32 md:w-40 md:h-40 mb-6">
+    <!-- Processing -->
+    <div id="processing-area" class="hidden bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10 p-12 flex-col items-center justify-center min-h-[350px]">
+      <div class="relative w-32 h-32 mb-6">
         <svg class="w-full h-full progress-ring" viewBox="0 0 100 100">
           <circle class="text-slate-800/50 stroke-current" stroke-width="3" cx="50" cy="50" r="46" fill="transparent"></circle>
-          <circle id="progress-circle" class="text-cyan-400 stroke-current progress-ring__circle" stroke-width="3" stroke-linecap="round" cx="50" cy="50" r="46" fill="transparent" stroke-dasharray="0 289.02" style="filter: drop-shadow(0 0 8px rgba(34,211,238,0.8));"></circle>
+          <circle id="progress-circle" class="text-cyan-400 stroke-current" stroke-width="3" stroke-linecap="round" cx="50" cy="50" r="46" fill="transparent" stroke-dasharray="0 289" style="filter: drop-shadow(0 0 6px rgba(34,211,238,0.8));"></circle>
         </svg>
         <div class="absolute inset-0 flex items-center justify-center">
-          <span id="progress-percent" class="text-2xl md:text-3xl font-bold text-white">0%</span>
+          <span id="progress-percent" class="text-2xl font-bold text-white">0%</span>
         </div>
       </div>
-      <h3 id="progress-message" class="text-lg font-bold text-white mb-2 animate-pulse text-center px-4">準備中...</h3>
-      <p id="progress-detail" class="text-sm text-slate-400 text-center"></p>
-      <button id="cancel-button" class="mt-6 px-8 py-3 text-sm font-bold text-slate-500 hover:text-white rounded-full hover:bg-white/10 transition-all touch-feedback">キャンセル</button>
+      <h3 id="progress-message" class="text-lg font-bold text-white mb-1 animate-pulse">処理中...</h3>
+      <p id="progress-detail" class="text-sm text-slate-400"></p>
+      <button id="cancel-button" class="mt-4 px-6 py-2 text-sm text-slate-500 hover:text-white rounded-full hover:bg-white/10 transition-all">キャンセル</button>
     </div>
 
-    <!-- Editor View -->
+    <!-- Editor -->
     <div id="editor-area" class="hidden space-y-4">
       
       <!-- Controls -->
-      <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-3">
-        <div class="flex gap-4 items-center justify-center md:justify-start">
-          <span id="file-name" class="text-sm text-cyan-300 font-medium truncate max-w-[150px]"></span>
+      <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-white/5 border border-white/10 rounded-xl p-3">
+        <div class="flex gap-3 items-center justify-center md:justify-start">
+          <span id="file-name" class="text-sm text-cyan-300 font-medium truncate max-w-[120px]"></span>
           <span id="slide-count" class="text-xs text-slate-500"></span>
         </div>
-        <div class="flex gap-2 flex-wrap justify-center md:justify-end">
-          <button id="download-editable-pptx-btn" class="flex-1 md:flex-none px-4 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback shadow-lg" title="編集可能PPTX">
-            <i data-lucide="edit" class="w-4 h-4"></i>
-            <span>編集可能PPTX</span>
+        <div class="flex gap-2 flex-wrap justify-center">
+          <button id="download-clean-pptx-btn" class="flex-1 md:flex-none px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 shadow-lg touch-feedback" title="テキスト消去済みPPTX">
+            <i data-lucide="file-check" class="w-4 h-4"></i>
+            <span>クリーンPPTX</span>
           </button>
-          <button id="download-zip-btn" class="px-3 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="ZIP">
+          <button id="download-zip-btn" class="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-medium transition-all touch-feedback" title="消去済み画像ZIP">
             <i data-lucide="file-archive" class="w-4 h-4"></i>
           </button>
-          <button id="download-json-btn" class="px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="JSON">
+          <button id="download-json-btn" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-all touch-feedback" title="JSON">
             <i data-lucide="file-json" class="w-4 h-4"></i>
           </button>
-          <button id="download-text-btn" class="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 touch-feedback" title="TXT">
-            <i data-lucide="file-text" class="w-4 h-4"></i>
-          </button>
-          <button id="reset-btn" class="px-3 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center touch-feedback" title="リセット">
+          <button id="reset-btn" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-medium transition-all touch-feedback" title="リセット">
             <i data-lucide="refresh-cw" class="w-4 h-4"></i>
           </button>
         </div>
       </div>
 
       <!-- Stats -->
-      <div id="stats-bar" class="flex flex-wrap gap-3 justify-center text-xs">
-        <span class="px-3 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-full"><span id="stat-blocks">0</span> テキストブロック</span>
-        <span class="px-3 py-1.5 bg-green-500/20 text-green-300 rounded-full"><span id="stat-chars">0</span> 文字</span>
-        <span class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full"><span id="stat-shapes">0</span> 図形</span>
+      <div class="flex flex-wrap gap-2 justify-center text-xs">
+        <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full"><span id="stat-blocks">0</span> ブロック</span>
+        <span class="px-3 py-1 bg-green-500/20 text-green-300 rounded-full"><span id="stat-chars">0</span> 文字</span>
       </div>
 
       <!-- Tabs -->
-      <div class="flex gap-2 overflow-x-auto pb-2">
-        <button id="tab-preview" class="tab-btn tab-active px-4 py-2 rounded-lg border border-white/10 text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap">
-          <i data-lucide="layout-grid" class="w-4 h-4"></i>プレビュー
+      <div class="flex gap-2 overflow-x-auto">
+        <button id="tab-compare" class="tab-btn tab-active px-4 py-2 rounded-lg border border-white/10 text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+          <i data-lucide="columns" class="w-4 h-4"></i>比較
         </button>
-        <button id="tab-blocks" class="tab-btn px-4 py-2 rounded-lg border border-white/10 text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap text-slate-400 hover:text-white hover:bg-white/5">
-          <i data-lucide="layout-list" class="w-4 h-4"></i>テキストブロック
+        <button id="tab-blocks" class="tab-btn px-4 py-2 rounded-lg border border-white/10 text-sm font-medium flex items-center gap-2 whitespace-nowrap text-slate-400 hover:text-white">
+          <i data-lucide="list" class="w-4 h-4"></i>ブロック
         </button>
       </div>
 
-      <!-- Preview Tab -->
-      <div id="tab-content-preview" class="tab-content">
-        <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
-          <div id="slide-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[60vh] overflow-y-auto custom-scrollbar" role="list"></div>
+      <!-- Compare Tab -->
+      <div id="tab-content-compare" class="tab-content">
+        <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold text-white">元画像 vs テキスト消去後</h3>
+            <div class="flex items-center gap-2">
+              <button id="prev-compare" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-all">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+              </button>
+              <span id="compare-index" class="text-xs text-slate-400">1/1</span>
+              <button id="next-compare" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-all">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs text-slate-500 mb-2 text-center">元画像</p>
+              <div id="original-preview" class="bg-black/30 rounded-lg overflow-hidden"></div>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 mb-2 text-center">テキスト消去後</p>
+              <div id="erased-preview" class="bg-black/30 rounded-lg overflow-hidden"></div>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Blocks Tab -->
       <div id="tab-content-blocks" class="tab-content hidden">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+          <div class="bg-white/5 border border-white/10 rounded-xl p-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
             <h3 class="text-sm font-bold text-white mb-3">スライド選択</h3>
             <div id="block-slide-list" class="space-y-2"></div>
           </div>
-          
-          <div class="lg:col-span-2 space-y-4">
-            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
-              <h3 class="text-sm font-bold text-white mb-3" id="block-preview-title">テキストブロック</h3>
-              <div id="block-preview-container" class="relative bg-black/30 rounded-lg overflow-hidden">
-                <p class="text-slate-500 text-sm p-8 text-center">スライドを選択してください</p>
-              </div>
-            </div>
-            
-            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 max-h-[300px] overflow-y-auto custom-scrollbar">
-              <h3 class="text-sm font-bold text-white mb-3">
-                ブロック一覧 <span id="block-count" class="text-xs text-slate-400 ml-2">(0)</span>
-              </h3>
-              <div id="block-list" class="space-y-2"></div>
-            </div>
+          <div class="lg:col-span-2 bg-white/5 border border-white/10 rounded-xl p-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <h3 class="text-sm font-bold text-white mb-3">テキストブロック <span id="block-count" class="text-xs text-slate-400"></span></h3>
+            <div id="block-list" class="space-y-2"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Error View -->
-    <div id="error-area" class="hidden bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10 p-12 text-center space-y-6" role="alert">
-      <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
-        <i data-lucide="x" class="w-8 h-8 text-red-500"></i>
+    <!-- Error -->
+    <div id="error-area" class="hidden bg-white/5 rounded-2xl border border-white/10 p-12 text-center space-y-4">
+      <div class="w-14 h-14 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
+        <i data-lucide="x" class="w-7 h-7 text-red-500"></i>
       </div>
-      <h3 class="text-lg font-bold text-slate-200">エラーが発生しました</h3>
+      <h3 class="text-lg font-bold text-slate-200">エラー</h3>
       <p id="error-message" class="text-slate-500 text-sm"></p>
-      <button id="retry-btn" class="px-8 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all font-medium touch-feedback">リトライ</button>
+      <button id="retry-btn" class="px-6 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all">リトライ</button>
     </div>
   </main>
 
   <footer class="text-center text-xs text-slate-600 py-4">
-    <a href="https://github.com/Toshiki-Yasuda/pdf-slide-studio" target="_blank" class="hover:text-slate-400 transition-colors">PDF Slide Studio Pro v3</a>
-    • Smart Text Merge • No Upload
+    PDF Slide Studio Pro v4 • Text Erase & Replace
   </footer>
 </div>
 ```
 
   </div>
 
-  <!-- Modal -->
-
-  <div id="slide-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
-    <div class="relative max-w-4xl w-full max-h-[90vh] bg-slate-900 rounded-2xl overflow-hidden">
-      <button id="close-modal" class="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
-      <button id="prev-slide" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all">
-        <i data-lucide="chevron-left" class="w-5 h-5"></i>
-      </button>
-      <button id="next-slide" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all">
-        <i data-lucide="chevron-right" class="w-5 h-5"></i>
-      </button>
-      <div class="p-4 overflow-auto max-h-[90vh]">
-        <div id="modal-preview-container" class="relative">
-          <img id="modal-image" src="" alt="スライド" class="w-full h-auto rounded-lg">
-        </div>
-        <p id="modal-caption" class="text-center text-slate-400 text-sm mt-4"></p>
-        <div id="modal-blocks" class="mt-4 p-4 bg-black/30 rounded-lg max-h-[200px] overflow-y-auto">
-          <div id="modal-block-list" class="space-y-2"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Toast -->
 
-  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden px-6 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl shadow-xl">
-    <div class="flex items-center gap-3">
-      <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5 text-green-400"></i>
-      <span id="toast-message">完了</span>
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden px-5 py-2.5 bg-slate-800 border border-slate-700 text-white rounded-xl shadow-xl">
+    <div class="flex items-center gap-2">
+      <i id="toast-icon" data-lucide="check-circle" class="w-4 h-4 text-green-400"></i>
+      <span id="toast-message" class="text-sm">完了</span>
     </div>
   </div>
 
   <script>
-    // ============================================
-    // Initialize
-    // ============================================
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const state = {
@@ -372,22 +309,18 @@
       images: [],
       zipBlob: null,
       cancelRequested: false,
-      currentModalSlide: 0,
       isExporting: false,
+      currentCompareIndex: 0,
       selectedSlideIndex: null,
       // Settings
-      ocrEnabled: true,
-      shapeDetectionEnabled: false,
       ocrLanguage: 'jpn+eng',
+      eraseMargin: 5,
       minConfidence: 50,
-      lineMergeThreshold: 40,
-      minTextLength: 3,
-      bgOpacity: 20,
-      includeBgImage: true,
-      includeShapes: true
+      fontFamily: 'Meiryo',
+      autoBold: true
     };
 
-    const elements = {
+    const el = {
       fileInput: document.getElementById('file-input'),
       uploadArea: document.getElementById('upload-area'),
       uploadButton: document.getElementById('upload-button'),
@@ -403,119 +336,185 @@
       cancelButton: document.getElementById('cancel-button'),
       fileName: document.getElementById('file-name'),
       slideCount: document.getElementById('slide-count'),
-      slideGrid: document.getElementById('slide-grid'),
       statBlocks: document.getElementById('stat-blocks'),
       statChars: document.getElementById('stat-chars'),
-      statShapes: document.getElementById('stat-shapes'),
-      downloadEditablePptxBtn: document.getElementById('download-editable-pptx-btn'),
+      downloadCleanPptxBtn: document.getElementById('download-clean-pptx-btn'),
       downloadZipBtn: document.getElementById('download-zip-btn'),
       downloadJsonBtn: document.getElementById('download-json-btn'),
-      downloadTextBtn: document.getElementById('download-text-btn'),
       resetBtn: document.getElementById('reset-btn'),
       retryBtn: document.getElementById('retry-btn'),
       errorMessage: document.getElementById('error-message'),
-      slideModal: document.getElementById('slide-modal'),
-      closeModal: document.getElementById('close-modal'),
-      prevSlide: document.getElementById('prev-slide'),
-      nextSlide: document.getElementById('next-slide'),
-      modalImage: document.getElementById('modal-image'),
-      modalCaption: document.getElementById('modal-caption'),
-      modalPreviewContainer: document.getElementById('modal-preview-container'),
-      modalBlockList: document.getElementById('modal-block-list'),
       toast: document.getElementById('toast'),
       toastIcon: document.getElementById('toast-icon'),
       toastMessage: document.getElementById('toast-message'),
-      // Settings inputs
-      ocrEnabled: document.getElementById('ocr-enabled'),
-      shapeDetectionEnabled: document.getElementById('shape-detection-enabled'),
+      // Settings
       ocrLanguage: document.getElementById('ocr-language'),
+      eraseMargin: document.getElementById('erase-margin'),
+      eraseMarginValue: document.getElementById('erase-margin-value'),
       minConfidence: document.getElementById('min-confidence'),
       minConfidenceValue: document.getElementById('min-confidence-value'),
-      lineMergeThreshold: document.getElementById('line-merge-threshold'),
-      lineMergeThresholdValue: document.getElementById('line-merge-threshold-value'),
-      minTextLength: document.getElementById('min-text-length'),
-      minTextLengthValue: document.getElementById('min-text-length-value'),
-      bgOpacity: document.getElementById('bg-opacity'),
-      bgOpacityValue: document.getElementById('bg-opacity-value'),
-      includeBgImage: document.getElementById('include-bg-image'),
-      includeShapes: document.getElementById('include-shapes'),
-      // Tabs
-      tabPreview: document.getElementById('tab-preview'),
+      fontFamily: document.getElementById('font-family'),
+      autoBold: document.getElementById('auto-bold'),
+      // Tabs & Compare
+      tabCompare: document.getElementById('tab-compare'),
       tabBlocks: document.getElementById('tab-blocks'),
-      tabContentPreview: document.getElementById('tab-content-preview'),
+      tabContentCompare: document.getElementById('tab-content-compare'),
       tabContentBlocks: document.getElementById('tab-content-blocks'),
+      originalPreview: document.getElementById('original-preview'),
+      erasedPreview: document.getElementById('erased-preview'),
+      compareIndex: document.getElementById('compare-index'),
+      prevCompare: document.getElementById('prev-compare'),
+      nextCompare: document.getElementById('next-compare'),
       blockSlideList: document.getElementById('block-slide-list'),
-      blockPreviewContainer: document.getElementById('block-preview-container'),
-      blockPreviewTitle: document.getElementById('block-preview-title'),
       blockList: document.getElementById('block-list'),
       blockCount: document.getElementById('block-count')
     };
 
     lucide.createIcons();
 
-    // Settings event listeners
-    elements.minConfidence.addEventListener('input', (e) => {
+    // Settings listeners
+    el.eraseMargin.addEventListener('input', e => {
+      state.eraseMargin = parseInt(e.target.value);
+      el.eraseMarginValue.textContent = `${state.eraseMargin}px`;
+    });
+    el.minConfidence.addEventListener('input', e => {
       state.minConfidence = parseInt(e.target.value);
-      elements.minConfidenceValue.textContent = `${state.minConfidence}%`;
-    });
-    elements.lineMergeThreshold.addEventListener('input', (e) => {
-      state.lineMergeThreshold = parseInt(e.target.value);
-      elements.lineMergeThresholdValue.textContent = `${state.lineMergeThreshold}px`;
-    });
-    elements.minTextLength.addEventListener('input', (e) => {
-      state.minTextLength = parseInt(e.target.value);
-      elements.minTextLengthValue.textContent = `${state.minTextLength}文字`;
-    });
-    elements.bgOpacity.addEventListener('input', (e) => {
-      state.bgOpacity = parseInt(e.target.value);
-      elements.bgOpacityValue.textContent = `${state.bgOpacity}%`;
+      el.minConfidenceValue.textContent = `${state.minConfidence}%`;
     });
 
-    // Init OCR
-    async function initOCR() {
-      try {
-        if (window.Tesseract) {
-          elements.initStatus.innerHTML = `<i data-lucide="check-circle" class="w-3 h-3 text-green-400"></i><span>準備完了</span>`;
-          lucide.createIcons();
-          setTimeout(() => elements.initStatus.classList.add('hidden'), 2000);
-        }
-      } catch (err) {
-        console.error('OCR init error:', err);
+    // Init
+    (async () => {
+      if (window.Tesseract) {
+        el.initStatus.innerHTML = '<i data-lucide="check-circle" class="w-3 h-3 text-green-400"></i><span>準備完了</span>';
+        lucide.createIcons();
+        setTimeout(() => el.initStatus.classList.add('hidden'), 1500);
       }
-    }
-    initOCR();
+    })();
 
     // ============================================
-    // Smart Text Merge Algorithm
+    // Text Erase Algorithm
     // ============================================
-    function smartMergeTextBlocks(lines, canvasWidth, canvasHeight) {
+    function eraseTextFromCanvas(canvas, blocks, margin = 5) {
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      
+      // 元の画像データを取得
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      
+      blocks.forEach(block => {
+        if (!block.bbox) return;
+        
+        const x0 = Math.max(0, Math.floor(block.bbox.x0) - margin);
+        const y0 = Math.max(0, Math.floor(block.bbox.y0) - margin);
+        const x1 = Math.min(width, Math.ceil(block.bbox.x1) + margin);
+        const y1 = Math.min(height, Math.ceil(block.bbox.y1) + margin);
+        
+        // 周辺の背景色を取得（領域の上下左右の端から）
+        const bgColor = estimateBackgroundColor(data, width, height, x0, y0, x1, y1);
+        
+        // 領域を背景色で塗りつぶし
+        for (let y = y0; y < y1; y++) {
+          for (let x = x0; x < x1; x++) {
+            const idx = (y * width + x) * 4;
+            data[idx] = bgColor.r;
+            data[idx + 1] = bgColor.g;
+            data[idx + 2] = bgColor.b;
+            // アルファは維持
+          }
+        }
+      });
+      
+      ctx.putImageData(imageData, 0, 0);
+      return canvas;
+    }
+
+    function estimateBackgroundColor(data, width, height, x0, y0, x1, y1) {
+      const samples = [];
+      
+      // 上端
+      if (y0 > 2) {
+        for (let x = x0; x < x1; x += 5) {
+          const idx = ((y0 - 2) * width + x) * 4;
+          samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+        }
+      }
+      
+      // 下端
+      if (y1 < height - 2) {
+        for (let x = x0; x < x1; x += 5) {
+          const idx = ((y1 + 2) * width + x) * 4;
+          samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+        }
+      }
+      
+      // 左端
+      if (x0 > 2) {
+        for (let y = y0; y < y1; y += 5) {
+          const idx = (y * width + (x0 - 2)) * 4;
+          samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+        }
+      }
+      
+      // 右端
+      if (x1 < width - 2) {
+        for (let y = y0; y < y1; y += 5) {
+          const idx = (y * width + (x1 + 2)) * 4;
+          samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+        }
+      }
+      
+      if (samples.length === 0) {
+        return { r: 255, g: 255, b: 255 };
+      }
+      
+      // 最頻出色を探す（単純な平均だと中間色になるため）
+      const colorCounts = {};
+      samples.forEach(s => {
+        // 色を量子化
+        const qr = Math.round(s.r / 16) * 16;
+        const qg = Math.round(s.g / 16) * 16;
+        const qb = Math.round(s.b / 16) * 16;
+        const key = `${qr},${qg},${qb}`;
+        colorCounts[key] = (colorCounts[key] || 0) + 1;
+      });
+      
+      let maxCount = 0;
+      let dominantColor = '255,255,255';
+      for (const [color, count] of Object.entries(colorCounts)) {
+        if (count > maxCount) {
+          maxCount = count;
+          dominantColor = color;
+        }
+      }
+      
+      const [r, g, b] = dominantColor.split(',').map(Number);
+      return { r, g, b };
+    }
+
+    // ============================================
+    // Smart Text Merge
+    // ============================================
+    function smartMergeLines(lines, canvasWidth, canvasHeight) {
       if (!lines || lines.length === 0) return [];
       
-      // 1. 信頼度フィルタ
+      // フィルタ
       let filtered = lines.filter(line => {
         if (!line.text || !line.bbox) return false;
         if (line.confidence < state.minConfidence) return false;
-        if (line.text.trim().length < state.minTextLength) return false;
-        return true;
-      });
-      
-      // 2. ゴミテキストフィルタ
-      filtered = filtered.filter(line => {
         const text = line.text.trim();
-        // 記号だけ、数字だけ、意味のない文字列を除外
+        if (text.length < 2) return false;
         if (/^[\s\-_=|\\\/\[\]{}()"'`~!@#$%^&*]+$/.test(text)) return false;
-        if (/^[0-9\s\.\,]+$/.test(text) && text.length < 4) return false;
-        // 明らかなゴミ文字列
-        if (/^[a-zA-Z]{1,2}$/.test(text) && !/^(I|A|OK|AI)$/i.test(text)) return false;
         return true;
       });
       
       if (filtered.length === 0) return [];
       
-      // 3. Y座標でソート
+      // Y座標でソート
       filtered.sort((a, b) => a.bbox.y0 - b.bbox.y0);
       
-      // 4. 行をグループ化（同じ行にあるものをマージ）
+      // 行グループ化
       const lineGroups = [];
       let currentGroup = null;
       
@@ -523,48 +522,42 @@
         if (!currentGroup) {
           currentGroup = {
             lines: [line],
-            y0: line.bbox.y0,
-            y1: line.bbox.y1,
-            x0: line.bbox.x0,
-            x1: line.bbox.x1
+            y0: line.bbox.y0, y1: line.bbox.y1,
+            x0: line.bbox.x0, x1: line.bbox.x1
           };
         } else {
-          // 同じ行かどうか判定（Y座標のオーバーラップ）
           const overlapY = Math.min(currentGroup.y1, line.bbox.y1) - Math.max(currentGroup.y0, line.bbox.y0);
           const lineHeight = Math.min(currentGroup.y1 - currentGroup.y0, line.bbox.y1 - line.bbox.y0);
           
-          if (overlapY > lineHeight * 0.5) {
-            // 同じ行に追加
+          if (overlapY > lineHeight * 0.4) {
             currentGroup.lines.push(line);
             currentGroup.x0 = Math.min(currentGroup.x0, line.bbox.x0);
             currentGroup.x1 = Math.max(currentGroup.x1, line.bbox.x1);
             currentGroup.y0 = Math.min(currentGroup.y0, line.bbox.y0);
             currentGroup.y1 = Math.max(currentGroup.y1, line.bbox.y1);
           } else {
-            // 新しい行
             lineGroups.push(currentGroup);
             currentGroup = {
               lines: [line],
-              y0: line.bbox.y0,
-              y1: line.bbox.y1,
-              x0: line.bbox.x0,
-              x1: line.bbox.x1
+              y0: line.bbox.y0, y1: line.bbox.y1,
+              x0: line.bbox.x0, x1: line.bbox.x1
             };
           }
         }
       });
       if (currentGroup) lineGroups.push(currentGroup);
       
-      // 5. 各行グループ内でX座標順にソートしてテキストを結合
+      // X順にソートしてテキスト結合
       lineGroups.forEach(group => {
         group.lines.sort((a, b) => a.bbox.x0 - b.bbox.x0);
         group.text = group.lines.map(l => l.text.trim()).join(' ');
         group.confidence = Math.round(group.lines.reduce((sum, l) => sum + l.confidence, 0) / group.lines.length);
       });
       
-      // 6. 段落にグループ化（近い行をまとめる）
+      // 段落グループ化
       const paragraphs = [];
       let currentPara = null;
+      const mergeThreshold = 35;
       
       lineGroups.forEach(group => {
         if (!currentPara) {
@@ -576,16 +569,11 @@
           };
         } else {
           const gap = group.y0 - currentPara.bbox.y1;
-          const avgLineHeight = (currentPara.bbox.y1 - currentPara.bbox.y0) / currentPara.lines.length;
-          
-          // 同じ段落かどうか
-          // - 行間が閾値以下
-          // - X座標が大きくずれていない
           const xOverlap = Math.min(currentPara.bbox.x1, group.x1) - Math.max(currentPara.bbox.x0, group.x0);
-          const xOverlapRatio = xOverlap / Math.min(currentPara.bbox.x1 - currentPara.bbox.x0, group.x1 - group.x0);
+          const minWidth = Math.min(currentPara.bbox.x1 - currentPara.bbox.x0, group.x1 - group.x0);
+          const xOverlapRatio = xOverlap / minWidth;
           
-          if (gap < state.lineMergeThreshold && xOverlapRatio > 0.3) {
-            // 同じ段落
+          if (gap < mergeThreshold && gap > -10 && xOverlapRatio > 0.2) {
             currentPara.lines.push(group);
             currentPara.text += '\n' + group.text;
             currentPara.bbox.x0 = Math.min(currentPara.bbox.x0, group.x0);
@@ -593,7 +581,6 @@
             currentPara.bbox.y1 = group.y1;
             currentPara.confidence = Math.round((currentPara.confidence + group.confidence) / 2);
           } else {
-            // 新しい段落
             paragraphs.push(currentPara);
             currentPara = {
               lines: [group],
@@ -606,162 +593,34 @@
       });
       if (currentPara) paragraphs.push(currentPara);
       
-      // 7. 最終的なブロックを作成
       return paragraphs.map((para, idx) => ({
         id: idx,
         text: para.text,
         confidence: para.confidence,
         bbox: para.bbox,
-        type: 'paragraph',
-        lineCount: para.lines.length
+        lineCount: para.lines.length,
+        fontSize: estimateFontSize(para.bbox, para.lines.length)
       }));
     }
 
-    // ============================================
-    // Shape Detection (Improved)
-    // ============================================
-    function detectShapesImproved(canvas) {
-      if (!state.shapeDetectionEnabled) return [];
-      
-      const ctx = canvas.getContext('2d');
-      const width = canvas.width;
-      const height = canvas.height;
-      const imageData = ctx.getImageData(0, 0, width, height);
-      const data = imageData.data;
-      
-      // 色の多様性をチェックして写真領域を検出
-      function isPhotographicRegion(x, y, w, h) {
-        const sampleSize = 100;
-        const colors = new Set();
-        
-        for (let i = 0; i < sampleSize; i++) {
-          const sx = x + Math.floor(Math.random() * w);
-          const sy = y + Math.floor(Math.random() * h);
-          if (sx >= width || sy >= height) continue;
-          
-          const idx = (sy * width + sx) * 4;
-          // 色を量子化（8段階）
-          const r = Math.floor(data[idx] / 32);
-          const g = Math.floor(data[idx + 1] / 32);
-          const b = Math.floor(data[idx + 2] / 32);
-          colors.add(`${r},${g},${b}`);
-        }
-        
-        // 色が多様すぎる場合は写真
-        return colors.size > 30;
-      }
-      
-      const shapes = [];
-      const gray = new Uint8ClampedArray(width * height);
-      
-      for (let i = 0; i < data.length; i += 4) {
-        gray[i / 4] = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
-      }
-      
-      // Sobel
-      const edges = new Uint8ClampedArray(width * height);
-      const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
-      const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
-      
-      for (let y = 1; y < height - 1; y++) {
-        for (let x = 1; x < width - 1; x++) {
-          let gx = 0, gy = 0;
-          for (let ky = -1; ky <= 1; ky++) {
-            for (let kx = -1; kx <= 1; kx++) {
-              const idx = (y + ky) * width + (x + kx);
-              const kidx = (ky + 1) * 3 + (kx + 1);
-              gx += gray[idx] * sobelX[kidx];
-              gy += gray[idx] * sobelY[kidx];
-            }
-          }
-          edges[y * width + x] = Math.min(255, Math.sqrt(gx * gx + gy * gy));
-        }
-      }
-      
-      const visited = new Set();
-      const threshold = 60;
-      const minArea = 500;
-      const maxArea = width * height * 0.3;
-      
-      function floodFill(startX, startY) {
-        const stack = [[startX, startY]];
-        const region = [];
-        let minX = startX, maxX = startX, minY = startY, maxY = startY;
-        
-        while (stack.length > 0 && region.length < 15000) {
-          const [x, y] = stack.pop();
-          const key = `${x},${y}`;
-          
-          if (visited.has(key) || x < 0 || x >= width || y < 0 || y >= height) continue;
-          if (edges[y * width + x] < threshold) continue;
-          
-          visited.add(key);
-          region.push([x, y]);
-          minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-          minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-          
-          stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
-        }
-        return { region, minX, maxX, minY, maxY };
-      }
-      
-      for (let y = 10; y < height - 10; y += 25) {
-        for (let x = 10; x < width - 10; x += 25) {
-          if (visited.has(`${x},${y}`) || edges[y * width + x] < threshold) continue;
-          
-          const { region, minX, maxX, minY, maxY } = floodFill(x, y);
-          const shapeWidth = maxX - minX;
-          const shapeHeight = maxY - minY;
-          const area = region.length;
-          
-          if (area < minArea || area > maxArea) continue;
-          if (shapeWidth < 20 || shapeHeight < 20) continue;
-          
-          // 写真領域をスキップ
-          if (isPhotographicRegion(minX, minY, shapeWidth, shapeHeight)) continue;
-          
-          const boundingArea = shapeWidth * shapeHeight;
-          const fillRatio = area / boundingArea;
-          const aspectRatio = shapeWidth / (shapeHeight || 1);
-          
-          let type = 'rectangle';
-          let color = '#3b82f6';
-          
-          if (aspectRatio > 0.7 && aspectRatio < 1.3 && fillRatio > 0.4) {
-            type = 'ellipse';
-            color = '#10b981';
-          } else if (aspectRatio > 4 || aspectRatio < 0.25) {
-            type = 'line';
-            color = '#f59e0b';
-          }
-          
-          shapes.push({
-            id: shapes.length,
-            type, x: minX, y: minY,
-            width: shapeWidth, height: shapeHeight,
-            area, fillRatio: Math.round(fillRatio * 100),
-            color
-          });
-        }
-      }
-      
-      shapes.sort((a, b) => b.area - a.area);
-      return shapes.slice(0, 15);
+    function estimateFontSize(bbox, lineCount) {
+      const height = bbox.y1 - bbox.y0;
+      const lineHeight = height / lineCount;
+      // おおよそのフォントサイズ（ピクセル -> pt変換）
+      return Math.max(8, Math.min(48, Math.round(lineHeight * 0.7)));
     }
 
     // ============================================
-    // OCR Processing
+    // OCR
     // ============================================
-    async function performOCR(imageDataUrl, language = 'jpn+eng') {
-      if (!window.Tesseract || !state.ocrEnabled) {
-        return { text: '', confidence: 0, lines: [] };
-      }
+    async function performOCR(imageDataUrl, language) {
+      if (!window.Tesseract) return { text: '', confidence: 0, lines: [] };
       
       try {
         const worker = await Tesseract.createWorker(language, 1, {
           logger: m => {
             if (m.status === 'recognizing text') {
-              elements.progressDetail.textContent = `OCR: ${Math.round(m.progress * 100)}%`;
+              el.progressDetail.textContent = `OCR: ${Math.round(m.progress * 100)}%`;
             }
           }
         });
@@ -769,11 +628,10 @@
         const result = await worker.recognize(imageDataUrl);
         await worker.terminate();
         
-        return { 
-          text: result.data.text.trim(), 
+        return {
+          text: result.data.text.trim(),
           confidence: Math.round(result.data.confidence),
-          lines: result.data.lines || [],
-          words: result.data.words || []
+          lines: result.data.lines || []
         };
       } catch (err) {
         console.error('OCR Error:', err);
@@ -784,62 +642,42 @@
     // ============================================
     // Event Listeners
     // ============================================
-    elements.uploadButton.addEventListener('click', (e) => { e.preventDefault(); elements.fileInput.click(); });
-    elements.uploadButton.addEventListener('touchend', (e) => { e.preventDefault(); elements.fileInput.click(); });
-
-    elements.fileInput.addEventListener('change', (e) => {
+    el.uploadButton.addEventListener('click', e => { e.preventDefault(); el.fileInput.click(); });
+    
+    el.fileInput.addEventListener('change', e => {
       const file = e.target.files[0];
       if (file && file.type === 'application/pdf') {
-        // Read settings
-        state.ocrEnabled = elements.ocrEnabled.checked;
-        state.shapeDetectionEnabled = elements.shapeDetectionEnabled.checked;
-        state.ocrLanguage = elements.ocrLanguage.value;
-        state.includeBgImage = elements.includeBgImage.checked;
-        state.includeShapes = elements.includeShapes.checked;
+        state.ocrLanguage = el.ocrLanguage.value;
+        state.fontFamily = el.fontFamily.value;
+        state.autoBold = el.autoBold.checked;
         processFile(file);
-      } else if (file) {
-        showError('PDFファイルのみ対応しています。');
       }
     });
 
-    // Drag & Drop
-    elements.uploadButton.addEventListener('dragover', (e) => { e.preventDefault(); elements.uploadButton.classList.add('bg-indigo-500/10'); });
-    elements.uploadButton.addEventListener('dragleave', (e) => { e.preventDefault(); elements.uploadButton.classList.remove('bg-indigo-500/10'); });
-    elements.uploadButton.addEventListener('drop', (e) => {
+    el.uploadButton.addEventListener('dragover', e => { e.preventDefault(); el.uploadButton.classList.add('bg-indigo-500/10'); });
+    el.uploadButton.addEventListener('dragleave', e => { e.preventDefault(); el.uploadButton.classList.remove('bg-indigo-500/10'); });
+    el.uploadButton.addEventListener('drop', e => {
       e.preventDefault();
-      elements.uploadButton.classList.remove('bg-indigo-500/10');
+      el.uploadButton.classList.remove('bg-indigo-500/10');
       const file = e.dataTransfer.files[0];
       if (file && file.type === 'application/pdf') {
-        state.ocrEnabled = elements.ocrEnabled.checked;
-        state.shapeDetectionEnabled = elements.shapeDetectionEnabled.checked;
-        state.ocrLanguage = elements.ocrLanguage.value;
-        state.includeBgImage = elements.includeBgImage.checked;
-        state.includeShapes = elements.includeShapes.checked;
+        state.ocrLanguage = el.ocrLanguage.value;
+        state.fontFamily = el.fontFamily.value;
+        state.autoBold = el.autoBold.checked;
         processFile(file);
       }
     });
 
-    elements.cancelButton.addEventListener('click', () => { state.cancelRequested = true; });
-    elements.resetBtn.addEventListener('click', reset);
-    elements.retryBtn.addEventListener('click', reset);
+    el.cancelButton.addEventListener('click', () => { state.cancelRequested = true; });
+    el.resetBtn.addEventListener('click', reset);
+    el.retryBtn.addEventListener('click', reset);
 
-    elements.downloadEditablePptxBtn.addEventListener('click', downloadEditablePptx);
-    elements.downloadZipBtn.addEventListener('click', downloadZip);
-    elements.downloadJsonBtn.addEventListener('click', downloadJson);
-    elements.downloadTextBtn.addEventListener('click', downloadAllText);
+    el.downloadCleanPptxBtn.addEventListener('click', downloadCleanPptx);
+    el.downloadZipBtn.addEventListener('click', downloadZip);
+    el.downloadJsonBtn.addEventListener('click', downloadJson);
 
-    elements.closeModal.addEventListener('click', closeModal);
-    elements.prevSlide.addEventListener('click', () => navigateSlide(-1));
-    elements.nextSlide.addEventListener('click', () => navigateSlide(1));
-    elements.slideModal.addEventListener('click', (e) => { if (e.target === elements.slideModal) closeModal(); });
-
-    document.addEventListener('keydown', (e) => {
-      if (!elements.slideModal.classList.contains('hidden')) {
-        if (e.key === 'Escape') closeModal();
-        if (e.key === 'ArrowLeft') navigateSlide(-1);
-        if (e.key === 'ArrowRight') navigateSlide(1);
-      }
-    });
+    el.prevCompare.addEventListener('click', () => navigateCompare(-1));
+    el.nextCompare.addEventListener('click', () => navigateCompare(1));
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => switchTab(btn.id.replace('tab-', '')));
@@ -853,10 +691,10 @@
       state.images = [];
       state.zipBlob = null;
       state.cancelRequested = false;
-      state.selectedSlideIndex = null;
+      state.currentCompareIndex = 0;
       
       showProcessing();
-      updateProgress(0, 0, 'PDFを解析中...', '');
+      updateProgress(0, 0, 'PDF解析中...', '');
 
       try {
         const arrayBuffer = await file.arrayBuffer();
@@ -864,10 +702,9 @@
         const totalPages = pdf.numPages;
 
         const zip = new JSZip();
-        const imageFolder = zip.folder('images');
 
         for (let i = 1; i <= totalPages; i++) {
-          if (state.cancelRequested) { reset(); showToast('キャンセルしました', 'info'); return; }
+          if (state.cancelRequested) { reset(); showToast('キャンセル', 'info'); return; }
 
           updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'レンダリング中...');
 
@@ -875,63 +712,64 @@
           const scale = 2.0;
           const viewport = page.getViewport({ scale });
 
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-
-          await page.render({ canvasContext: context, viewport }).promise;
-
-          const dataUrl = canvas.toDataURL('image/png');
-          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+          // 元画像用Canvas
+          const originalCanvas = document.createElement('canvas');
+          originalCanvas.width = viewport.width;
+          originalCanvas.height = viewport.height;
+          const originalCtx = originalCanvas.getContext('2d');
+          await page.render({ canvasContext: originalCtx, viewport }).promise;
+          const originalDataUrl = originalCanvas.toDataURL('image/png');
 
           // OCR
-          let ocrResult = { text: '', confidence: 0, lines: [] };
-          if (state.ocrEnabled) {
-            updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'OCR処理中...');
-            ocrResult = await performOCR(dataUrl, state.ocrLanguage);
-          }
+          updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'OCR処理中...');
+          const ocrResult = await performOCR(originalDataUrl, state.ocrLanguage);
 
-          // Smart merge
+          // テキストマージ
           updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'テキストマージ中...');
-          const mergedBlocks = smartMergeTextBlocks(ocrResult.lines, viewport.width, viewport.height);
+          const blocks = smartMergeLines(ocrResult.lines, viewport.width, viewport.height);
 
-          // Shape detection
-          let shapes = [];
-          if (state.shapeDetectionEnabled) {
-            updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, '図形検出中...');
-            shapes = detectShapesImproved(canvas);
-          }
+          // テキスト消去用Canvas（コピー）
+          updateProgress(i, totalPages, `スライド ${i}/${totalPages}`, 'テキスト消去中...');
+          const erasedCanvas = document.createElement('canvas');
+          erasedCanvas.width = viewport.width;
+          erasedCanvas.height = viewport.height;
+          const erasedCtx = erasedCanvas.getContext('2d');
+          erasedCtx.drawImage(originalCanvas, 0, 0);
+          
+          // テキスト領域を消去
+          eraseTextFromCanvas(erasedCanvas, blocks, state.eraseMargin);
+          const erasedDataUrl = erasedCanvas.toDataURL('image/png');
+          const erasedBlob = await new Promise(resolve => erasedCanvas.toBlob(resolve, 'image/png'));
 
           state.images.push({
             id: i,
-            dataUrl, blob,
+            originalDataUrl,
+            erasedDataUrl,
+            erasedBlob,
             width: viewport.width,
             height: viewport.height,
-            name: `slide_${String(i).padStart(2, '0')}.png`,
-            text: ocrResult.text,
-            confidence: ocrResult.confidence,
-            blocks: mergedBlocks,
-            shapes: shapes
+            blocks,
+            text: ocrResult.text
           });
 
-          imageFolder.file(`slide_${String(i).padStart(2, '0')}.png`, blob);
+          zip.file(`slide_${String(i).padStart(2, '0')}_clean.png`, erasedBlob);
 
-          canvas.width = 0;
-          canvas.height = 0;
-          await new Promise(r => setTimeout(r, 30));
+          // メモリ解放
+          originalCanvas.width = 0;
+          erasedCanvas.width = 0;
+          await new Promise(r => setTimeout(r, 20));
         }
 
-        if (state.cancelRequested) { reset(); showToast('キャンセルしました', 'info'); return; }
+        if (state.cancelRequested) { reset(); showToast('キャンセル', 'info'); return; }
 
-        updateProgress(totalPages, totalPages, 'パッケージ作成中...', '');
+        updateProgress(totalPages, totalPages, 'ZIP作成中...', '');
         state.zipBlob = await zip.generateAsync({ type: 'blob' });
 
         showEditor();
-        showToast(`${totalPages}枚の処理が完了しました`, 'success');
+        showToast(`${totalPages}枚の処理完了`, 'success');
       } catch (err) {
-        console.error('Processing error:', err);
-        showError('PDFの処理中にエラーが発生しました。');
+        console.error('Error:', err);
+        showError('PDFの処理中にエラーが発生しました');
       }
     }
 
@@ -939,45 +777,41 @@
     // UI Functions
     // ============================================
     function showProcessing() {
-      elements.uploadArea.classList.add('hidden');
-      elements.processingArea.classList.remove('hidden');
-      elements.processingArea.style.display = 'flex';
-      elements.editorArea.classList.add('hidden');
-      elements.errorArea.classList.add('hidden');
-      elements.headerContent.classList.add('hidden');
+      el.uploadArea.classList.add('hidden');
+      el.processingArea.classList.remove('hidden');
+      el.processingArea.style.display = 'flex';
+      el.editorArea.classList.add('hidden');
+      el.errorArea.classList.add('hidden');
+      el.headerContent.classList.add('hidden');
     }
 
     function showEditor() {
-      elements.uploadArea.classList.add('hidden');
-      elements.processingArea.classList.add('hidden');
-      elements.processingArea.style.display = 'none';
-      elements.editorArea.classList.remove('hidden');
-      elements.errorArea.classList.add('hidden');
-      elements.headerContent.classList.add('hidden');
+      el.uploadArea.classList.add('hidden');
+      el.processingArea.classList.add('hidden');
+      el.processingArea.style.display = 'none';
+      el.editorArea.classList.remove('hidden');
+      el.errorArea.classList.add('hidden');
+      el.headerContent.classList.add('hidden');
 
-      elements.fileName.textContent = state.file.name;
-      elements.slideCount.textContent = `${state.images.length} スライド`;
-      
+      el.fileName.textContent = state.file.name;
+      el.slideCount.textContent = `${state.images.length} スライド`;
+
       const totalBlocks = state.images.reduce((sum, img) => sum + (img.blocks?.length || 0), 0);
       const totalChars = state.images.reduce((sum, img) => sum + (img.text?.length || 0), 0);
-      const totalShapes = state.images.reduce((sum, img) => sum + (img.shapes?.length || 0), 0);
-      
-      elements.statBlocks.textContent = totalBlocks;
-      elements.statChars.textContent = totalChars.toLocaleString();
-      elements.statShapes.textContent = totalShapes;
+      el.statBlocks.textContent = totalBlocks;
+      el.statChars.textContent = totalChars.toLocaleString();
 
-      renderSlideGrid();
+      updateCompareView();
       renderBlockSlideList();
     }
 
     function showError(message) {
-      elements.uploadArea.classList.add('hidden');
-      elements.processingArea.classList.add('hidden');
-      elements.processingArea.style.display = 'none';
-      elements.editorArea.classList.add('hidden');
-      elements.errorArea.classList.remove('hidden');
-      elements.headerContent.classList.remove('hidden');
-      elements.errorMessage.textContent = message;
+      el.uploadArea.classList.add('hidden');
+      el.processingArea.classList.add('hidden');
+      el.editorArea.classList.add('hidden');
+      el.errorArea.classList.remove('hidden');
+      el.headerContent.classList.remove('hidden');
+      el.errorMessage.textContent = message;
     }
 
     function reset() {
@@ -985,26 +819,24 @@
       state.images = [];
       state.zipBlob = null;
       state.cancelRequested = false;
-      state.selectedSlideIndex = null;
-      elements.fileInput.value = '';
+      state.currentCompareIndex = 0;
+      el.fileInput.value = '';
 
-      elements.uploadArea.classList.remove('hidden');
-      elements.processingArea.classList.add('hidden');
-      elements.processingArea.style.display = 'none';
-      elements.editorArea.classList.add('hidden');
-      elements.errorArea.classList.add('hidden');
-      elements.headerContent.classList.remove('hidden');
+      el.uploadArea.classList.remove('hidden');
+      el.processingArea.classList.add('hidden');
+      el.editorArea.classList.add('hidden');
+      el.errorArea.classList.add('hidden');
+      el.headerContent.classList.remove('hidden');
       
-      switchTab('preview');
+      switchTab('compare');
     }
 
     function updateProgress(current, total, message, detail) {
       const percent = total > 0 ? Math.round((current / total) * 100) : 0;
-      const circumference = 289.02;
-      elements.progressCircle.setAttribute('stroke-dasharray', `${(circumference * percent) / 100} ${circumference}`);
-      elements.progressPercent.textContent = `${percent}%`;
-      elements.progressMessage.textContent = message;
-      elements.progressDetail.textContent = detail || '';
+      el.progressCircle.setAttribute('stroke-dasharray', `${289 * percent / 100} 289`);
+      el.progressPercent.textContent = `${percent}%`;
+      el.progressMessage.textContent = message;
+      el.progressDetail.textContent = detail;
     }
 
     function switchTab(tabName) {
@@ -1012,174 +844,78 @@
         btn.classList.remove('tab-active');
         btn.classList.add('text-slate-400');
       });
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
 
-      const activeTab = document.getElementById(`tab-${tabName}`);
-      const activeContent = document.getElementById(`tab-content-${tabName}`);
-      
-      if (activeTab && activeContent) {
-        activeTab.classList.add('tab-active');
-        activeTab.classList.remove('text-slate-400');
-        activeContent.classList.remove('hidden');
+      const tab = document.getElementById(`tab-${tabName}`);
+      const content = document.getElementById(`tab-content-${tabName}`);
+      if (tab && content) {
+        tab.classList.add('tab-active');
+        tab.classList.remove('text-slate-400');
+        content.classList.remove('hidden');
       }
     }
 
-    function renderSlideGrid() {
-      elements.slideGrid.innerHTML = '';
+    function updateCompareView() {
+      if (state.images.length === 0) return;
+      
+      const img = state.images[state.currentCompareIndex];
+      el.compareIndex.textContent = `${state.currentCompareIndex + 1}/${state.images.length}`;
+      
+      el.originalPreview.innerHTML = `<img src="${img.originalDataUrl}" class="w-full h-auto">`;
+      el.erasedPreview.innerHTML = `<img src="${img.erasedDataUrl}" class="w-full h-auto">`;
+    }
 
-      state.images.forEach((img, idx) => {
-        const slideEl = document.createElement('div');
-        slideEl.className = 'group relative bg-slate-800/50 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-cyan-500/50 transition-all touch-feedback';
-        
-        slideEl.innerHTML = `
-          <img src="${img.dataUrl}" alt="スライド ${idx + 1}" class="w-full h-auto" loading="lazy">
-          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <i data-lucide="maximize-2" class="w-6 h-6 text-white"></i>
-          </div>
-          <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs text-white font-medium">${idx + 1}</span>
-              <span class="text-[10px] text-cyan-300">${img.blocks?.length || 0}B</span>
-            </div>
-          </div>
-        `;
-
-        slideEl.addEventListener('click', () => openSlideModal(idx));
-        elements.slideGrid.appendChild(slideEl);
-      });
-
-      lucide.createIcons();
+    function navigateCompare(dir) {
+      const newIdx = state.currentCompareIndex + dir;
+      if (newIdx >= 0 && newIdx < state.images.length) {
+        state.currentCompareIndex = newIdx;
+        updateCompareView();
+      }
     }
 
     function renderBlockSlideList() {
-      elements.blockSlideList.innerHTML = '';
+      el.blockSlideList.innerHTML = '';
       state.images.forEach((img, idx) => {
         const btn = document.createElement('button');
-        btn.className = `w-full p-3 rounded-lg text-left transition-all ${state.selectedSlideIndex === idx ? 'bg-cyan-600 text-white' : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700'}`;
-        btn.innerHTML = `<div class="flex justify-between"><span>スライド ${idx + 1}</span><span class="text-xs opacity-70">${img.blocks?.length || 0}ブロック</span></div>`;
-        btn.addEventListener('click', () => selectSlideForBlockView(idx));
-        elements.blockSlideList.appendChild(btn);
+        btn.className = `w-full p-2.5 rounded-lg text-left text-sm transition-all ${state.selectedSlideIndex === idx ? 'bg-cyan-600 text-white' : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700'}`;
+        btn.innerHTML = `<div class="flex justify-between"><span>スライド ${idx + 1}</span><span class="text-xs opacity-70">${img.blocks?.length || 0}B</span></div>`;
+        btn.addEventListener('click', () => selectSlide(idx));
+        el.blockSlideList.appendChild(btn);
       });
     }
 
-    function selectSlideForBlockView(idx) {
+    function selectSlide(idx) {
       state.selectedSlideIndex = idx;
       const img = state.images[idx];
       
-      elements.blockPreviewTitle.textContent = `スライド ${idx + 1}`;
-      elements.blockCount.textContent = `(${img.blocks?.length || 0})`;
+      el.blockCount.textContent = `(${img.blocks?.length || 0})`;
       
-      // Preview with overlays
-      let html = `<div class="relative" style="max-width: 100%;"><img src="${img.dataUrl}" class="w-full h-auto">`;
-      
-      if (img.blocks) {
-        const colors = ['#22d3ee', '#a78bfa', '#34d399', '#fbbf24', '#f87171'];
-        img.blocks.forEach((block, i) => {
-          if (block.bbox) {
-            const left = (block.bbox.x0 / img.width) * 100;
-            const top = (block.bbox.y0 / img.height) * 100;
-            const width = ((block.bbox.x1 - block.bbox.x0) / img.width) * 100;
-            const height = ((block.bbox.y1 - block.bbox.y0) / img.height) * 100;
-            const color = colors[i % colors.length];
-            
-            html += `<div class="text-block-overlay" style="left:${left}%;top:${top}%;width:${width}%;height:${height}%;border-color:${color};background:${color}20;"></div>`;
-          }
-        });
-      }
-      
-      html += '</div>';
-      elements.blockPreviewContainer.innerHTML = html;
-      
-      // Block list
       if (img.blocks && img.blocks.length > 0) {
-        const colors = ['bg-cyan-500/20 border-cyan-500/50', 'bg-purple-500/20 border-purple-500/50', 'bg-green-500/20 border-green-500/50', 'bg-yellow-500/20 border-yellow-500/50', 'bg-red-500/20 border-red-500/50'];
-        elements.blockList.innerHTML = img.blocks.map((block, i) => `
-          <div class="p-3 rounded-lg border ${colors[i % colors.length]}">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-white">ブロック ${i + 1}</span>
-              <span class="text-xs text-slate-400">${block.confidence}% / ${block.lineCount}行</span>
+        el.blockList.innerHTML = img.blocks.map((b, i) => `
+          <div class="p-3 bg-slate-800/50 rounded-lg border-l-2 border-cyan-500">
+            <div class="flex justify-between mb-1">
+              <span class="text-xs font-bold text-cyan-300">B${i + 1}</span>
+              <span class="text-xs text-slate-500">${b.confidence}% / ${b.fontSize}pt</span>
             </div>
-            <p class="text-sm text-slate-200 whitespace-pre-wrap">${block.text}</p>
+            <p class="text-sm text-slate-200 whitespace-pre-wrap">${b.text}</p>
           </div>
         `).join('');
       } else {
-        elements.blockList.innerHTML = '<p class="text-slate-500 text-sm">テキストブロックなし</p>';
+        el.blockList.innerHTML = '<p class="text-slate-500 text-sm">ブロックなし</p>';
       }
       
       renderBlockSlideList();
     }
 
-    // Modal
-    function openSlideModal(idx) {
-      state.currentModalSlide = idx;
-      updateModalContent();
-      elements.slideModal.classList.remove('hidden');
-      elements.slideModal.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal() {
-      elements.slideModal.classList.add('hidden');
-      elements.slideModal.style.display = 'none';
-      document.body.style.overflow = '';
-    }
-
-    function navigateSlide(dir) {
-      const newIdx = state.currentModalSlide + dir;
-      if (newIdx >= 0 && newIdx < state.images.length) {
-        state.currentModalSlide = newIdx;
-        updateModalContent();
-      }
-    }
-
-    function updateModalContent() {
-      const img = state.images[state.currentModalSlide];
-      
-      // Image with overlays
-      let html = `<img src="${img.dataUrl}" class="w-full h-auto rounded-lg">`;
-      
-      if (img.blocks) {
-        const colors = ['#22d3ee', '#a78bfa', '#34d399', '#fbbf24', '#f87171'];
-        img.blocks.forEach((block, i) => {
-          if (block.bbox) {
-            const left = (block.bbox.x0 / img.width) * 100;
-            const top = (block.bbox.y0 / img.height) * 100;
-            const width = ((block.bbox.x1 - block.bbox.x0) / img.width) * 100;
-            const height = ((block.bbox.y1 - block.bbox.y0) / img.height) * 100;
-            const color = colors[i % colors.length];
-            
-            html += `<div class="text-block-overlay" style="left:${left}%;top:${top}%;width:${width}%;height:${height}%;border-color:${color};background:${color}15;"></div>`;
-          }
-        });
-      }
-      
-      elements.modalPreviewContainer.innerHTML = html;
-      elements.modalCaption.textContent = `スライド ${state.currentModalSlide + 1} / ${state.images.length}（${img.blocks?.length || 0}ブロック）`;
-      
-      if (img.blocks && img.blocks.length > 0) {
-        elements.modalBlockList.innerHTML = img.blocks.map((b, i) => `
-          <div class="p-2 bg-slate-800/50 rounded text-xs border-l-2" style="border-color: ${['#22d3ee', '#a78bfa', '#34d399', '#fbbf24', '#f87171'][i % 5]}">
-            <span class="font-bold">B${i+1}:</span> ${b.text}
-          </div>
-        `).join('');
-      } else {
-        elements.modalBlockList.innerHTML = '<p class="text-slate-500 text-xs">テキストブロックなし</p>';
-      }
-      
-      elements.prevSlide.style.display = state.currentModalSlide > 0 ? 'flex' : 'none';
-      elements.nextSlide.style.display = state.currentModalSlide < state.images.length - 1 ? 'flex' : 'none';
-    }
-
-    // Toast
     function showToast(message, type = 'success') {
-      elements.toastMessage.textContent = message;
+      el.toastMessage.textContent = message;
       const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info';
       const iconColor = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-blue-400';
-      elements.toastIcon.setAttribute('data-lucide', iconName);
-      elements.toastIcon.className = `w-5 h-5 ${iconColor}`;
+      el.toastIcon.setAttribute('data-lucide', iconName);
+      el.toastIcon.className = `w-4 h-4 ${iconColor}`;
       lucide.createIcons();
-      elements.toast.classList.remove('hidden');
-      setTimeout(() => elements.toast.classList.add('hidden'), 3000);
+      el.toast.classList.remove('hidden');
+      setTimeout(() => el.toast.classList.add('hidden'), 2500);
     }
 
     // ============================================
@@ -1196,21 +932,19 @@
       URL.revokeObjectURL(url);
     }
 
-    function setExportButtonsDisabled(disabled) {
+    function setButtonsDisabled(disabled) {
       state.isExporting = disabled;
-      elements.downloadEditablePptxBtn.disabled = disabled;
-      elements.downloadZipBtn.disabled = disabled;
-      elements.downloadJsonBtn.disabled = disabled;
-      elements.downloadTextBtn.disabled = disabled;
+      el.downloadCleanPptxBtn.disabled = disabled;
+      el.downloadZipBtn.disabled = disabled;
+      el.downloadJsonBtn.disabled = disabled;
     }
 
-    // Editable PPTX
-    async function downloadEditablePptx() {
+    async function downloadCleanPptx() {
       if (!state.images.length || state.isExporting) return;
 
       try {
-        setExportButtonsDisabled(true);
-        showToast('編集可能PPTX作成中...', 'info');
+        setButtonsDisabled(true);
+        showToast('PPTX作成中...', 'info');
 
         const pptx = new PptxGenJS();
         const slideWidth = 10;
@@ -1221,96 +955,63 @@
         for (const img of state.images) {
           const slide = pptx.addSlide();
           
-          // Background image
-          if (state.includeBgImage) {
-            slide.addImage({
-              data: img.dataUrl,
-              x: 0, y: 0,
-              w: slideWidth, h: slideHeight,
-              transparency: 100 - state.bgOpacity
-            });
-          }
+          // テキスト消去済み背景
+          slide.addImage({
+            data: img.erasedDataUrl,
+            x: 0, y: 0,
+            w: slideWidth, h: slideHeight
+          });
           
-          // Text blocks
+          // テキストブロックを配置
           if (img.blocks && img.blocks.length > 0) {
-            img.blocks.forEach((block) => {
-              if (block.bbox && block.text) {
-                const x = (block.bbox.x0 / img.width) * slideWidth;
-                const y = (block.bbox.y0 / img.height) * slideHeight;
-                const w = ((block.bbox.x1 - block.bbox.x0) / img.width) * slideWidth;
-                const h = ((block.bbox.y1 - block.bbox.y0) / img.height) * slideHeight;
-                
-                // Estimate font size
-                const lineHeight = h / (block.lineCount || 1);
-                const estimatedFontSize = Math.max(8, Math.min(28, Math.round(lineHeight * 72 * 0.7)));
-                
-                slide.addText(block.text, {
-                  x: Math.max(0, x - 0.05),
-                  y: Math.max(0, y - 0.02),
-                  w: Math.max(w + 0.1, 0.5),
-                  h: Math.max(h + 0.04, 0.3),
-                  fontSize: estimatedFontSize,
-                  fontFace: 'Arial',
-                  color: '333333',
-                  valign: 'top',
-                  wrap: true
-                });
-              }
-            });
-          }
-          
-          // Shapes
-          if (state.includeShapes && img.shapes && img.shapes.length > 0) {
-            img.shapes.forEach((shape) => {
-              const x = (shape.x / img.width) * slideWidth;
-              const y = (shape.y / img.height) * slideHeight;
-              const w = (shape.width / img.width) * slideWidth;
-              const h = (shape.height / img.height) * slideHeight;
-              const fillColor = shape.color.replace('#', '');
+            img.blocks.forEach(block => {
+              if (!block.bbox || !block.text) return;
               
-              if (shape.type === 'ellipse') {
-                slide.addShape(pptx.ShapeType.ellipse, {
-                  x, y, w, h,
-                  fill: { color: fillColor, transparency: 70 },
-                  line: { color: fillColor, width: 1 }
-                });
-              } else if (shape.type === 'line') {
-                slide.addShape(pptx.ShapeType.line, {
-                  x, y, w, h,
-                  line: { color: fillColor, width: 2 }
-                });
-              } else {
-                slide.addShape(pptx.ShapeType.rect, {
-                  x, y, w, h,
-                  fill: { color: fillColor, transparency: 70 },
-                  line: { color: fillColor, width: 1 }
-                });
-              }
+              const x = (block.bbox.x0 / img.width) * slideWidth;
+              const y = (block.bbox.y0 / img.height) * slideHeight;
+              const w = ((block.bbox.x1 - block.bbox.x0) / img.width) * slideWidth;
+              const h = ((block.bbox.y1 - block.bbox.y0) / img.height) * slideHeight;
+              
+              // フォントサイズをPPTX用に調整（px -> pt）
+              const fontSize = Math.max(8, Math.min(36, Math.round(block.fontSize * 0.6)));
+              const isBold = state.autoBold && fontSize > 14;
+              
+              slide.addText(block.text, {
+                x: Math.max(0, x - 0.02),
+                y: Math.max(0, y - 0.01),
+                w: Math.max(w + 0.04, 0.5),
+                h: Math.max(h + 0.02, 0.2),
+                fontSize: fontSize,
+                fontFace: state.fontFamily,
+                color: '333333',
+                bold: isBold,
+                valign: 'top',
+                wrap: true
+              });
             });
           }
           
-          // Notes
+          // ノートに全テキスト
           if (img.text) {
             slide.addNotes(img.text);
           }
         }
 
-        const filename = state.file.name.replace('.pdf', '') + '_editable.pptx';
+        const filename = state.file.name.replace('.pdf', '') + '_clean.pptx';
         await pptx.writeFile({ fileName: filename });
         
-        const totalBlocks = state.images.reduce((sum, img) => sum + (img.blocks?.length || 0), 0);
-        showToast(`完成！${totalBlocks}個のテキストボックス`, 'success');
+        showToast('クリーンPPTX完成！', 'success');
       } catch (err) {
         console.error('PPTX error:', err);
-        showToast('PPTX作成に失敗しました', 'error');
+        showToast('PPTX作成失敗', 'error');
       } finally {
-        setExportButtonsDisabled(false);
+        setButtonsDisabled(false);
       }
     }
 
     function downloadZip() {
       if (state.zipBlob && state.file) {
-        downloadFile(state.zipBlob, state.file.name.replace('.pdf', '') + '_slides.zip');
+        downloadFile(state.zipBlob, state.file.name.replace('.pdf', '') + '_clean_images.zip');
         showToast('ZIPダウンロード完了', 'success');
       }
     }
@@ -1322,42 +1023,20 @@
         filename: state.file.name,
         processedAt: new Date().toISOString(),
         settings: {
+          eraseMargin: state.eraseMargin,
           minConfidence: state.minConfidence,
-          lineMergeThreshold: state.lineMergeThreshold,
-          minTextLength: state.minTextLength
+          fontFamily: state.fontFamily
         },
         slides: state.images.map((img, idx) => ({
           slideNumber: idx + 1,
           width: img.width,
           height: img.height,
-          blocks: img.blocks || [],
-          shapes: img.shapes || []
+          blocks: img.blocks || []
         }))
       };
 
       downloadFile(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), state.file.name.replace('.pdf', '') + '_data.json');
       showToast('JSONダウンロード完了', 'success');
-    }
-
-    function downloadAllText() {
-      if (!state.images.length) return;
-
-      const allText = state.images.map((img, idx) => {
-        let slideText = `===== スライド ${idx + 1} =====\n\n`;
-        
-        if (img.blocks && img.blocks.length > 0) {
-          img.blocks.forEach((block, i) => {
-            slideText += `[ブロック ${i + 1}]\n${block.text}\n\n`;
-          });
-        } else {
-          slideText += '(テキストなし)\n';
-        }
-        
-        return slideText;
-      }).join('\n');
-
-      downloadFile(new Blob([allText], { type: 'text/plain; charset=utf-8' }), state.file.name.replace('.pdf', '') + '_text.txt');
-      showToast('テキストダウンロード完了', 'success');
     }
   </script>
 
